@@ -19,7 +19,7 @@ crons = ["* * * * *"]
 binding = "DB"
 database_name = "lv-monitor"
 # Paste the database_id printed by:  npx wrangler d1 create lv-monitor
-database_id = "PASTE_YOUR_D1_DATABASE_ID_HERE"
+database_id = "700fffa0-1636-4c33-8670-1665bbee7b36"
 migrations_dir = "migrations"
 
 [vars]
