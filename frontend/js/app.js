@@ -19,6 +19,7 @@ import { getJson, postJson, csvUrl } from './api.js';
 import { createStore, connectLive } from './store.js';
 import { esc, fmtTime, fmtDateTime, fmtDuration, fmtV } from './format.js';
 import { feederDiagram, diagramLegend } from './diagram.js';
+import { gaugeSettings, gaugeSvg, gaugeLegend } from './gauge.js';
 
 const store = createStore();
 const main = document.getElementById('main');
@@ -110,14 +111,14 @@ function renderFeeder(s) {
       <li>The exact spot inside a section cannot be found, and a broken wire, open switch, blown fuse or loose joint look the same.</li>
     </ul>`);
 
+  const dial = gaugeSettings(store.config);
   put('p-nodes', s.nodes.map((n) => {
     // Without a valid reading the card shows the connection state (Stale Data / Offline /
-    // No Data / Waiting) instead of an electrical status – never 0 V.
+    // No Data / Waiting) instead of an electrical status – never 0 V, and the dial has no needle.
     const conn = connectionState(n);
     const d = n.display_state === 'NO_DATA' ? conn : NODE_DISPLAY[n.display_state];
-    const volts = n.display_state === 'NO_DATA'
-      ? '<div class="volts none">— V</div>'
-      : `<div class="volts">${fmtV(n.last_valid_voltage_rms, 1)} V</div>`;
+    const value = n.display_state === 'NO_DATA' ? null : n.last_valid_voltage_rms;
+    const volts = `<div class="volts">${gaugeSvg({ settings: dial, value, label: n.label, statusLabel: conn.label })}</div>`;
     const lastValid = n.last_valid_at ? `last valid report ${fmtTime(n.last_valid_at)}` : 'no valid report yet';
     const connLine = `<div class="hint">${esc(conn.label)} · ${esc(lastValid)}</div>`;
     let hint = '';
@@ -131,6 +132,7 @@ function renderFeeder(s) {
     else if (n.display_state === 'NO_DATA') hint = 'Not counted as 0 V';
     return `<div class="node tone-${d.tone}"><div class="name">${esc(n.label)}</div>${volts}${pill(d.label, d.tone)}${hint ? `<div class="hint">${esc(hint)}</div>` : ''}${connLine}</div>`;
   }).join(''));
+  put('p-gauge-legend', gaugeLegend(dial));
 
   const source = isDemo() ? 'Simulated by the software' : fromTestSender(s) ? 'Software test sender (not real hardware)' : 'Real device';
   const nodeRows = s.nodes.map((n) => `<tr><td>${esc(n.label)} <span class="muted">${esc(n.node_id)}</span></td>
@@ -289,6 +291,7 @@ function buildLayout() {
       <div id="p-location"></div>
       <details class="more" data-key="section"><summary>How was the section estimated?</summary><div class="dbody" id="d-section"></div></details>
       <div class="nodes" id="p-nodes"></div>
+      <div class="gauge-legend" id="p-gauge-legend"></div>
       <details class="more" data-key="tech"><summary>Technical details</summary><div class="dbody" id="d-tech"></div></details>
     </section>
     <section class="row-bottom">
@@ -384,7 +387,10 @@ async function boot() {
       buttons = (await getJson('/sim/scenarios')).scenarios.filter((x) => x.button).sort((a, b) => a.button.order - b.button.order);
     }
   } catch (err) {
-    main.innerHTML = `<div class="error">Cannot reach the monitoring server (${esc(err.message)}). Start it with <b>npm run sim</b> and reload the page.</div>`;
+    const fix = window.LV_API_BASE
+      ? `Check that the backend at ${esc(window.LV_API_BASE)} is deployed and that ALLOWED_ORIGINS includes this page's address.`
+      : 'Start it with <b>npm run sim</b> and reload the page.';
+    main.innerHTML = `<div class="error">Cannot reach the monitoring server (${esc(err.message)}). ${fix}</div>`;
     renderConnection('reconnecting');
     return;
   }

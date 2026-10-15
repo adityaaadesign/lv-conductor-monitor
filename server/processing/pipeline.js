@@ -18,7 +18,8 @@ import {
 import { toIso } from '../domain/clock.js';
 
 export class Pipeline {
-  constructor({ config, repo, source, onStatus = () => {}, onEvent = () => {}, logger = console }) {
+  // sessionMemory: how many recent report numbers are remembered to spot duplicates.
+  constructor({ config, repo, source, onStatus = () => {}, onEvent = () => {}, logger = console, sessionMemory = 2048 }) {
     this.config = config;
     this.repo = repo;
     this.source = source;
@@ -27,6 +28,7 @@ export class Pipeline {
     this.logger = logger;
     this.params = config.detection;
     this.topology = config.topology;
+    this.sessionMemory = sessionMemory;
   }
 
   // ---- lifecycle -----------------------------------------------------------------------
@@ -85,7 +87,7 @@ export class Pipeline {
       controller_id: id, lastSeenAt: null, online: false, offlineSince: now, bootId: null,
       firmwareVersion: null, reportIntervalMs: null, protection: null, protectionJson: null,
     }]));
-    this.sessions = new SessionTracker();
+    this.sessions = new SessionTracker(this.sessionMemory);
     this.feeder = createFeederState(now);
     this.events = new EventManager({
       repo: this.repo, source: this.source, feederId: this.config.feeder.feeder_id, params: this.params,
@@ -96,6 +98,44 @@ export class Pipeline {
     this.storage = { ok: true, last_error: null, last_error_at: null, failures: 0 };
     this.counters = { accepted: 0, duplicates: 0, late: 0, rejected: 0, rejected_nodes: 0 };
     this.lastEvalAt = now;
+  }
+
+  // ---- saving and restoring the memory ----------------------------------------------
+  // Used by the Cloudflare Worker, which keeps no memory between requests: after each
+  // request the memory is saved in the database, and the next request continues from it.
+  // Must list every field that #initMemory sets (a test checks this).
+  exportMemory() {
+    return {
+      startedAt: this.startedAt,
+      nodes: this.nodes,
+      controllers: this.controllers,
+      sessions: this.sessions.sessions,
+      feeder: this.feeder,
+      openEvents: this.events.open,
+      recentTransients: this.events.recentTransients,
+      disagreement: this.disagreement,
+      liveLoc: this.liveLoc,
+      storage: this.storage,
+      counters: this.counters,
+      lastEvalAt: this.lastEvalAt,
+      previousRun: this.previousRun ?? null,
+    };
+  }
+
+  importMemory(m) {
+    this.#initMemory(m.startedAt);
+    this.nodes = m.nodes;
+    this.controllers = m.controllers;
+    this.sessions.sessions = m.sessions;
+    this.feeder = m.feeder;
+    this.events.open = m.openEvents;
+    this.events.recentTransients = m.recentTransients;
+    this.disagreement = m.disagreement;
+    this.liveLoc = m.liveLoc;
+    this.storage = m.storage;
+    this.counters = m.counters;
+    this.lastEvalAt = m.lastEvalAt;
+    this.previousRun = m.previousRun;
   }
 
   // Re-create the interruption incident from an event left open by the previous run.

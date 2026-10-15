@@ -11,7 +11,7 @@ been tested with real hardware. Full field-by-field reference: [DATA_CONTRACT.md
 ## 1. The big picture
 
 ```
- sensors ─► ESP32 controller ──(Wi-Fi, HTTP POST, JSON, once per second)──► laptop server ─► dashboard
+ sensors ─► ESP32 controller ──(Wi-Fi, HTTPS POST, JSON, every REPORT_INTERVAL_MS)──► Cloudflare Worker (or laptop server) ─► dashboard
              │
              └─ makes ALL protection decisions locally (open the switch etc.)
 ```
@@ -23,11 +23,15 @@ been tested with real hardware. Full field-by-field reference: [DATA_CONTRACT.md
 
 ---
 
-## 2. One report per second (plus one immediately when protection changes)
+## 2. One report every `REPORT_INTERVAL_MS` (plus one immediately when protection changes)
+
+Online demonstration: every **5 s** (`REPORT_INTERVAL_MS` in `firmware/esp32-controller/config.h` must match
+`REPORT_INTERVAL_MS` in `cloudflare/wrangler.toml`). Laptop bench tests: the laptop server expects ~1 s by
+default (`config/detection.json`); for 5 s start it with `REPORT_INTERVAL_MS=5000 STALE_AFTER_MS=12000 OFFLINE_AFTER_MS=30000 CONTROLLER_OFFLINE_AFTER_MS=30000 npm start`.
 
 Send `POST http://<laptop-ip>:8080/api/v1/telemetry` (laptop) or
-`POST https://lv-monitor-api.onrender.com/api/v1/telemetry` (online – HTTPS only, the firmware
-needs `WiFiClientSecure` with the root CA certificate; see [DEPLOYMENT.md](DEPLOYMENT.md)) with headers
+`POST https://lv-monitor-api.<your-subdomain>.workers.dev/api/v1/telemetry` (online – HTTPS only; the firmware
+uses `WiFiClientSecure` with the root certificate in `SERVER_ROOT_CA`, see [DEPLOYMENT.md](DEPLOYMENT.md) §6) with headers
 `Content-Type: application/json` and `X-Device-Key: <your key>`.
 
 One report covers **all nodes this controller measures** plus the switch status:

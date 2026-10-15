@@ -20,6 +20,18 @@
     "placeholder": true,
     "note": "Highest credible reading after calibration. Readings above this are rejected as OUT_OF_RANGE."
   },
+  "gauge_min_v": {
+    "value": 0,
+    "unit": "V",
+    "placeholder": true,
+    "note": "Lowest value on the node dials. Normally 0 V."
+  },
+  "gauge_max_v": {
+    "value": 300,
+    "unit": "V",
+    "placeholder": true,
+    "note": "Highest value on the node dials. Set it to the range of the actual demonstration circuit (normally the same as sensor_full_scale_v after calibration)."
+  },
 
   "controllers": [
     {

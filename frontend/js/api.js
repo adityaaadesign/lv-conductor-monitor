@@ -8,7 +8,7 @@ export class ApiError extends Error {
   }
 }
 
-// Where the server is. Empty = the same address as this page (laptop, or one Render service).
+// Where the server is. Empty = the same address as this page (the laptop server).
 // On Vercel, config.js is generated at build time from the API_BASE_URL setting.
 const API_BASE = String(window.LV_API_BASE ?? '').replace(/\/+$/, '');
 

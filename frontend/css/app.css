@@ -92,6 +92,29 @@ button { font: inherit; }
 .node .volts.none { color: var(--grey); }
 .node .hint { font-size: 12px; color: var(--text-3); margin-top: 6px; }
 
+/* Voltage dial on each node card (frontend/js/gauge.js) */
+.node .volts .gauge { display: block; width: 100%; max-width: 220px; height: auto; margin: 0 auto; overflow: visible; }
+.gauge .g-track { fill: none; stroke: var(--grey-bg); stroke-width: 14; }
+.gauge .g-band { fill: none; stroke-width: 14; opacity: .85; }
+.gauge .g-nosupply, .g-swatch.g-nosupply { stroke: var(--red); background: var(--red); }
+.gauge .g-low, .g-swatch.g-low { stroke: var(--amber); background: var(--amber); }
+.gauge .g-normal, .g-swatch.g-normal { stroke: var(--green); background: var(--green); }
+.gauge.no-reading .g-band { opacity: .18; }
+.gauge .g-nominal { stroke: var(--text-3); stroke-width: 2.5; }
+.gauge .g-needle { stroke: var(--text); stroke-width: 3.5; stroke-linecap: round; }
+.gauge .g-hub { fill: var(--text); }
+.gauge .g-value { font-size: 28px; font-weight: 800; fill: var(--text); font-variant-numeric: tabular-nums; }
+.gauge .g-value.none { fill: var(--grey); }
+.gauge .g-unit { font-size: 15px; font-weight: 700; fill: var(--text-2); }
+.gauge .g-status { font-size: 15px; font-weight: 700; fill: var(--grey); }
+.gauge .g-end { font-size: 11px; fill: var(--text-3); }
+.gauge-legend .g-nominal-key { background: var(--text-3) !important; }
+.gauge-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 10px; font-size: 12px; color: var(--text-3); }
+.gauge-legend .g-key { display: inline-flex; align-items: center; gap: 5px; }
+.gauge-legend .g-swatch { width: 14px; height: 5px; border-radius: 3px; display: inline-block; }
+.gauge-legend .g-nominal-key { width: 2px; height: 12px; background: var(--text); }
+.gauge-legend .g-note { flex-basis: 100%; }
+
 /* ---- expandable details ------------------------------------------------------------------ */
 details.more { border-top: 1px solid var(--border); margin-top: 12px; }
 details.more > summary { cursor: pointer; padding: 10px 2px 2px; font-size: 14px; font-weight: 600; color: var(--accent); list-style: none; display: flex; align-items: center; gap: 8px; }
@@ -150,7 +173,7 @@ details > summary:focus-visible { outline: 2px solid var(--accent); outline-offs
   .status .word { font-size: 27px; }
   .nodes { grid-template-columns: 1fr; gap: 8px; }
   .node { display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 10px; }
-  .node .volts { margin: 0; font-size: 22px; grid-row: span 2; }
+  .node .volts { margin: 0; grid-row: span 3; width: 150px; }
   .node .hint { grid-column: 1 / -1; }
   .iso-grid { grid-template-columns: 1fr; }
 }

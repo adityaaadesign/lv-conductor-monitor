@@ -16,6 +16,9 @@ firmware/**/secrets.h
 # Build output and hosting tool folders
 dist/
 .vercel/
+.wrangler/
+.dev.vars
+.dev.vars.*
 
 # Logs and editor/OS clutter
 *.log

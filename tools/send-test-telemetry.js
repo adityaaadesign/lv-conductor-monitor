@@ -13,6 +13,7 @@
 //          --seconds 30                                 (how long to send)
 //          --url http://127.0.0.1:8080                  (server address)
 //          --key your-device-key                        (needed for a hosted server)
+//          --interval 1000                              (ms between reports; use 5000 for Cloudflare)
 
 import { randomBytes } from 'node:crypto';
 import { loadConfig, loadDeviceKeys } from '../server/config/load-config.js';
@@ -23,6 +24,10 @@ const arg = (name, fallback) => {
 };
 const scenario = arg('scenario', 'normal');
 const seconds = Number(arg('seconds', 30));
+const intervalMs = Number(arg('interval', 1000));
+// The fault starts after 5 s, or after 3 reports if they are slower (so the dashboard
+// first shows all nodes normal).
+const faultAfterS = Math.max(5, (3 * intervalMs) / 1000);
 const config = loadConfig();
 const url = `${arg('url', `http://127.0.0.1:${config.server.port}`)}/api/v1/telemetry`;
 const controllerId = config.feeder.controllers[0].controller_id;
@@ -44,9 +49,9 @@ const nominal = config.feeder.nominal_voltage_v;
 const startedAt = Date.now();
 let seq = 0;
 
-// Node voltages for this second. The fault starts after 5 s.
+// Node voltages at this moment. The fault starts after faultAfterS.
 function readings(elapsedS) {
-  const faultOn = elapsedS >= 5;
+  const faultOn = elapsedS >= faultAfterS;
   const noise = () => (Math.random() - 0.5) * 2;
   const v = { 'N-A': nominal * 0.996 + noise(), 'N-B': nominal * 0.99 + noise(), 'N-C': nominal * 0.984 + noise() };
   if (faultOn && scenario === 'low') v['N-C'] = nominal * 0.8 + noise();
@@ -73,7 +78,7 @@ async function sendOne() {
     device_time: null,
     time_synced: false,
     firmware_version: 'test-sender-1',
-    report_interval_ms: 1000,
+    report_interval_ms: intervalMs,
     nodes: readings(elapsed),
     protection: null,   // the test sender has no protection logic or switch
   };
@@ -90,7 +95,8 @@ async function sendOne() {
   }
 }
 
-console.log(`TEST SENDER (not real hardware): scenario "${scenario}" for ${seconds} s -> ${url}`);
+console.log(`TEST SENDER (not real hardware): scenario "${scenario}" for ${seconds} s, one report every ${intervalMs / 1000} s, fault after ${faultAfterS} s -> ${url}`);
+sendOne();
 const timer = setInterval(async () => {
   if (Date.now() - startedAt >= seconds * 1000) {
     clearInterval(timer);
@@ -98,4 +104,4 @@ const timer = setInterval(async () => {
     return;
   }
   await sendOne();
-}, 1000);
+}, intervalMs);

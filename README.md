@@ -151,14 +151,15 @@ exactly the same code.
 | Section estimate | `server/processing/localization.js` |
 | Feeder status + shutdown command/feedback | `server/processing/feeder-state.js` |
 | Event creation and closing | `server/processing/event-manager.js` |
-| Node configuration (names, layout) | `config/feeder.json` |
+| Node configuration (names, layout, dial range `gauge_min_v`/`gauge_max_v`) | `config/feeder.json` |
 | Limits and times (all placeholders) | `config/detection.json` |
 | Data contract (message format) | `docs/DATA_CONTRACT.md` · short version `docs/HARDWARE_INTEGRATION.md` |
 | Report checking | `server/ingest/validator.js` |
 | Backend API (incl. `/telemetry`) | `server/api/routes.js` |
 | Simulator and demo scenarios | `server/simulation/` · `server/simulation/scenarios/*.json` |
 | Database | `server/storage/` (files in `data/`) |
-| Dashboard | `frontend/index.html`, `frontend/js/app.js`, `frontend/js/diagram.js` |
+| Dashboard | `frontend/index.html`, `frontend/js/app.js`, `frontend/js/diagram.js`, voltage dials `frontend/js/gauge.js` |
+| Online backend (Cloudflare Worker + D1) | `cloudflare/` (`src/app.js`, `wrangler.toml`, `migrations/`) |
 | Dashboard wording (all plain-English text) | `shared/simple.js` |
 | Tests | `tests/` |
 | Simple architecture | `docs/SOFTWARE_OVERVIEW.md` |
@@ -187,18 +188,22 @@ npm run send-test -- --scenario break
   Scenarios: `normal`, `low`, `break`, `silent-c`. Its readings are labelled **TEST SENDER** on the dashboard –
   they are not real measurements.
 - Check the live API in one step (before connecting the ESP32): `npm run api-check` (laptop) or
-  `npm run api-check -- --url https://lv-monitor-api.onrender.com --key <key>` (online).
-- Each node card shows **Online / Stale Data / Offline** and the time of its last valid report.
+  `npm run api-check -- --url https://lv-monitor-api.<your-subdomain>.workers.dev --key <key>` (online).
+- Each node card shows a **voltage dial**, **Online / Stale Data / Offline** and the time of its last valid report.
+  Without a valid reading the dial has no needle and shows `— V` – never 0 V.
 - Everything the firmware must send: [docs/HARDWARE_INTEGRATION.md](docs/HARDWARE_INTEGRATION.md).
 
 ### Putting it online
 
-- **Render** runs the LIVE backend (`render.yaml`: one service with a disk for the SQLite file).
-- **Vercel** hosts the dashboard page (`vercel.json`; it reads data from Render, allowed by CORS).
-- **DEMO** stays on the laptop: `npm run sim`.
+Free hosting (₹0 on the free plans):
+- **Cloudflare Worker + D1** runs the LIVE backend and database (`cloudflare/`). It uses the same detection
+  code as the laptop server, receives the ESP32 reports over HTTPS, and keeps readings and events in D1.
+- **Vercel** hosts the dashboard page (`vercel.json`); it asks the Worker for new data every 5 s.
+- **DEMO** stays on the laptop: `npm run sim`. Demo data never goes to Cloudflare.
 
-Steps, accounts, costs, environment variables (`DEVICE_KEYS`, `ALLOWED_ORIGINS`, `API_BASE_URL`) and the
-tests: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). **The online deployment has not been tested yet.**
+Steps, accounts, free-plan limits, settings (`DEVICE_KEYS`, `ALLOWED_ORIGINS`, `API_BASE_URL`) and the tests:
+[docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). **The online deployment has not been tested on Cloudflare or Vercel yet**
+(the Worker was tested on the laptop with Cloudflare's local runtime, `wrangler dev`).
 
 ### Firmware skeleton and integration tools
 
@@ -216,13 +221,13 @@ tests: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). **The online deployment has not
 
 | | |
 |---|---|
-| **Complete (software)** | Report checking, detection with timers and hysteresis, section estimate with "uncertain" cases, separate command/feedback handling, event log in SQLite, one-page dashboard, five demo scenarios, live HTTP input with device keys, automated tests |
+| **Complete (software)** | Report checking, detection with timers and hysteresis, section estimate with "uncertain" cases, separate command/feedback handling, event log in SQLite, one-page dashboard, five demo scenarios, live HTTP input with device keys, voltage dials, Cloudflare Worker + D1 backend, automated tests |
 | **Simulated** | All readings and switch feedback in DEMO mode; the controller's protection rule (`virtual-controller.js`) is only a stand-in for the real firmware |
 | **Tested only with software** | The live input (`/telemetry`) – with automated tests and the test sender, never with a real ESP32. The firmware core logic – on a PC, with simulated sine waves |
 | **Written but not compiled or tested** | The ESP32-specific firmware code (`firmware/esp32-controller/esp32-controller.ino`): pins, ADC, relay, Wi-Fi |
 | **Not verified at all** | Any real voltage measurement, real switch behaviour, detection accuracy, response time or safety performance. No such figures are claimed. |
 | **Waiting for hardware** | Real threshold values, node power arrangement, switch feedback availability, report rate, controller trip rule – see the questions in `docs/HARDWARE_INTEGRATION.md` §6 |
-| **Prepared but not tested** | Online deployment on Render + Vercel (`render.yaml`, `vercel.json`, `docs/DEPLOYMENT.md`); HTTPS from the ESP32 |
+| **Prepared but not tested** | Online deployment on Cloudflare + Vercel (`cloudflare/`, `vercel.json`, `docs/DEPLOYMENT.md`) – tested only locally with `wrangler dev`; HTTPS from the ESP32 (code written, root certificate still to be added, not compiled) |
 | **Deliberately not included** | Automatic reclosing or restoration, remote switching, user accounts |
 
 The older five-page dashboard is kept in `archive/` for reference only and is not used.
@@ -231,7 +236,7 @@ The older five-page dashboard is kept in `archive/` for reference only and is no
 
 ## 8. Tests
 
-`npm test` runs the automated tests (about 15 seconds). Each prints ✔ or ✖ and a summary at the end. They cover:
+`npm test` runs the automated tests (about 20 seconds). Each prints ✔ or ✖ and a summary at the end. They cover:
 
 - detection (normal, undervoltage, brief dips, loss of supply, missing data never becomes 0 V);
 - section estimate (single section, uncertain, source-wide outage, contradictory readings);
@@ -240,6 +245,8 @@ The older five-page dashboard is kept in `archive/` for reference only and is no
 - persistence (refresh, restart, no duplicate events from repeated or delayed messages);
 - the live input (keys, malformed and invalid reports, duplicates, fault detection over HTTP);
 - hosting support (`DEVICE_KEYS` variable, `/api/v1/health`, the `api-check` tool, CORS for the Vercel dashboard, the Vercel build, Online / Stale Data / Offline labels);
+- the Cloudflare Worker with a D1 test double (`tests/cloudflare/`): telemetry, wrong keys, validation, a node going Stale → Offline, the once-a-minute check, data kept in the database, simultaneous reports, CORS, detection with 5 s reports, and all 18 scenarios giving identical results when the memory is saved and restored before every step;
+- the voltage dials (range and bands from the configuration, no needle and no number without a valid reading);
 - safety boundaries (demo mode refuses device data; no route or code path can send commands to hardware);
 - the example messages in the documentation must pass the real validator;
 - the firmware core logic (compiled with `g++`): 51 C++ checks, plus its reports fed into the real server

@@ -1,0 +1,16 @@
+{
+  "name": "lv-monitor-cloudflare",
+  "private": true,
+  "description": "Cloudflare Worker (LIVE backend) for the LV conductor breakage monitor. See docs/DEPLOYMENT.md.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build-check": "wrangler deploy --dry-run --outdir dist",
+    "migrate:local": "wrangler d1 migrations apply lv-monitor --local",
+    "migrate:remote": "wrangler d1 migrations apply lv-monitor --remote",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.151.0"
+  }
+}

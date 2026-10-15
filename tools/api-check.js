@@ -3,7 +3,7 @@
 //
 //   Local:   npm start            (in one terminal, with a device key configured)
 //            npm run api-check    (in another)
-//   Hosted:  npm run api-check -- --url https://lv-monitor-api.onrender.com --key your-device-key
+//   Hosted:  npm run api-check -- --url https://lv-monitor-api.<your-subdomain>.workers.dev --key your-device-key
 //
 // The key can also be given as the environment variable DEVICE_KEY. Without --key the
 // local config/devices.local.json (or DEVICE_KEYS) is used.

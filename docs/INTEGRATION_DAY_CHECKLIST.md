@@ -30,7 +30,7 @@ equipment; the controller makes all protection decisions.
 
 ## 3. First contact
 
-- [ ] Serial Monitor shows `REPORT {...}` lines every second and **no** `SERVER REFUSED` lines.
+- [ ] Serial Monitor shows `REPORT {...}` lines at the configured report interval (1 s laptop / 5 s Cloudflare) and **no** `SERVER REFUSED` or `SERVER BUSY` lines.
 - [ ] Save ~30 s of Serial output to a file → `npm run check-report -- that-file.txt` → all accepted.
 - [ ] If refused: the message names the field; fix the firmware or `config/feeder.json`.
 

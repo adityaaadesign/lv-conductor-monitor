@@ -1,6 +1,6 @@
 // Minimal shared state with publish/subscribe, plus the live connection to the server.
 
-import { apiUrl } from './api.js';
+import { apiUrl, getJson } from './api.js';
 
 export function createStore() {
   const listeners = new Map();
@@ -34,8 +34,13 @@ export function createStore() {
   return store;
 }
 
-// Server-Sent Events: the browser reconnects automatically if the server goes away.
+// Live updates. The laptop server pushes them (Server-Sent Events, reconnects by itself).
+// The Cloudflare Worker cannot push, so /config says "poll": the page then asks for the
+// status every interval_ms – and stops while the browser tab is hidden, to stay well
+// inside the free request limit.
 export function connectLive(store) {
+  const lu = store.config?.live_updates;
+  if (lu?.method === 'poll') return pollStatus(store, Math.max(2000, Number(lu.interval_ms) || 5000));
   const es = new EventSource(apiUrl('/stream'));
   es.onopen = () => store.setConnection('live');
   es.onerror = () => store.setConnection('reconnecting');
@@ -48,4 +53,32 @@ export function connectLive(store) {
   }
   es.addEventListener('history_cleared', () => store.emit('history_cleared'));
   return es;
+}
+
+function pollStatus(store, intervalMs) {
+  let eventsVersion = store.status?.events_version ?? null;
+  let timer = null;
+  let busy = false;
+  const run = async () => {
+    if (busy) return;
+    busy = true;
+    try {
+      const s = await getJson('/status');
+      store.setConnection('live');
+      store.setStatus(s);
+      if (s.events_version !== eventsVersion) {   // the event list changed on the server
+        eventsVersion = s.events_version;
+        store.emit('events', { kind: 'poll' });
+      }
+    } catch {
+      store.setConnection('reconnecting');
+    } finally {
+      busy = false;
+    }
+  };
+  const start = () => { if (!timer) { run(); timer = setInterval(run, intervalMs); } };
+  const stop = () => { clearInterval(timer); timer = null; };
+  document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+  if (!document.hidden) start();
+  return { close: stop };
 }

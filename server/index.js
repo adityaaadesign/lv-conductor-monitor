@@ -4,17 +4,19 @@
 //                     Not yet tested with the real hardware.
 
 import path from 'node:path';
-import { loadConfig, loadDeviceKeys, ConfigError } from './config/load-config.js';
+import { loadConfig, loadDeviceKeys, ConfigError, timingOverrides } from './config/load-config.js';
 import { createServer } from './app.js';
 
-// Settings can also come from environment variables (used on a hosting service):
+// Settings can also come from environment variables:
 //   APP_MODE   sim | live            (default sim; --mode on the command line wins)
 //   PORT       port to listen on     (set automatically by most hosts)
 //   HOST       address to listen on  (default 0.0.0.0 when PORT is set, otherwise server.json)
-//   DATA_DIR   folder for the SQLite files (on Render: the persistent disk's mount path)
+//   DATA_DIR   folder for the SQLite files (default: data/)
 //   DEVICE_KEYS  controller keys for LIVE mode, e.g. CTRL-01=your-own-random-text
 //   ALLOWED_ORIGINS  dashboard address(es) on another host, e.g. https://lv-conductor-monitor.vercel.app
 //                    (several: separate with commas; no trailing slash)
+//   REPORT_INTERVAL_MS, STALE_AFTER_MS, OFFLINE_AFTER_MS, CONTROLLER_OFFLINE_AFTER_MS
+//                    optional communication timing (default: config/detection.json)
 const modeArg = process.argv.indexOf('--mode');
 const mode = modeArg > -1 ? process.argv[modeArg + 1] : (process.env.APP_MODE || 'sim');
 const portArg = process.argv.indexOf('--port');
@@ -22,7 +24,7 @@ const portArg = process.argv.indexOf('--port');
 let config;
 let deviceKeys = {};
 try {
-  config = loadConfig();
+  config = loadConfig({ overrides: { detection: timingOverrides(process.env) } });
   if (mode === 'live') deviceKeys = loadDeviceKeys();
 } catch (err) {
   if (err instanceof ConfigError) {

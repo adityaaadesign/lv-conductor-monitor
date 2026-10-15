@@ -1,6 +1,6 @@
 // Hosting support: DEVICE_KEYS environment variable, GET /api/v1/health, the api-check
 // tool, and the Online / Stale Data / Offline labels on the node cards.
-// Runs against local servers only – this does NOT test a real Render deployment.
+// Runs against local servers only – this does NOT test a real online deployment.
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -114,10 +114,10 @@ test('Vercel build: dashboard files plus config.js pointing at the backend', asy
   const run = (env) => execFileSync(process.execPath, ['tools/build-frontend.js'], { cwd: root, env: { ...process.env, ...env }, stdio: 'pipe' });
   try {
     assert.throws(() => run({ API_BASE_URL: '' }));
-    assert.throws(() => run({ API_BASE_URL: 'https://x.onrender.com/api/v1' }));
-    run({ API_BASE_URL: 'https://lv-monitor-api.onrender.com/' });
+    assert.throws(() => run({ API_BASE_URL: 'https://x.workers.dev/api/v1' }));
+    run({ API_BASE_URL: 'https://lv-monitor-api.example.workers.dev/' });
     const dist = path.join(root, 'dist');
-    assert.match(readFileSync(path.join(dist, 'config.js'), 'utf8'), /window\.LV_API_BASE = "https:\/\/lv-monitor-api\.onrender\.com";/);
+    assert.match(readFileSync(path.join(dist, 'config.js'), 'utf8'), /window\.LV_API_BASE = "https:\/\/lv-monitor-api\.example\.workers\.dev";/);
     for (const f of ['index.html', 'js/app.js', 'css/app.css', 'shared/simple.js']) assert.ok(existsSync(path.join(dist, f)), f);
     assert.ok(!existsSync(path.join(dist, 'server')), 'server code must not be published on Vercel');
   } finally {

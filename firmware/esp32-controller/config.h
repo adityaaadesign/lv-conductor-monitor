@@ -18,10 +18,20 @@
 // on the computer that flashes the ESP32, and do not commit that version of this file.
 #define WIFI_SSID         "PUT_WIFI_NAME_HERE"
 #define WIFI_PASSWORD     "PUT_WIFI_PASSWORD_HERE"
-// The laptop running `npm start`. Its server.json "host" must be "0.0.0.0".
-#define SERVER_URL        "http://PUT_LAPTOP_IP_HERE:8080/api/v1/telemetry"
-// Same text as in config/devices.local.json on the laptop.
-#define DEVICE_KEY        "PUT_THE_SAME_KEY_AS_IN_devices.local.json"
+// Where reports go. Two choices:
+//   Cloudflare (online):  "https://lv-monitor-api.<your-subdomain>.workers.dev/api/v1/telemetry"
+//   Laptop (bench test):  "http://<laptop-ip>:8080/api/v1/telemetry"  (server.json "host": "0.0.0.0")
+#define SERVER_URL        "PUT_SERVER_URL_HERE"
+// Same text as DEVICE_KEYS on the server (Cloudflare secret, or config/devices.local.json
+// on the laptop) – only the part after "CTRL-01=".
+#define DEVICE_KEY        "PUT_THE_SAME_KEY_AS_ON_THE_SERVER"
+
+// HTTPS (Cloudflare): the root certificate that signed the server's certificate, in PEM
+// text. TODO(firmware): fill in before using an https:// URL – see docs/DEPLOYMENT.md
+// ("HTTPS on the ESP32"). Several certificates may be pasted one after another.
+// Not needed for an http:// laptop URL. Without it, https:// reports are not sent
+// (the firmware never turns certificate checking off).
+static const char SERVER_ROOT_CA[] = "PUT_ROOT_CA_PEM_HERE";
 #define HTTP_TIMEOUT_MS   800      // keep short; protection never waits for the network
 
 // ---- Identity (must match config/feeder.json) ----------------------------------------
@@ -49,7 +59,8 @@ static const int NODE_ADC_PINS[] = {-1, -1, -1};
 #define MAINS_HZ              50      // TODO(hardware): confirm supply frequency
 #define SAMPLE_RATE_HZ        2000    // PLACEHOLDER: samples per second per node
 #define SAMPLES_PER_CYCLE     (SAMPLE_RATE_HZ / MAINS_HZ)
-#define REPORT_INTERVAL_MS    1000    // PLACEHOLDER (server expects ~1000)
+#define REPORT_INTERVAL_MS    5000    // PLACEHOLDER: must match REPORT_INTERVAL_MS in cloudflare/wrangler.toml
+                                      // (laptop server: expected_report_interval_ms in config/detection.json)
 
 // ADC health limits for a 12-bit ADC (0..4095). TODO(hardware): set from the sensor's
 // actual DC offset. A mean outside midMin..midMax means "no signal reference" (invalid).

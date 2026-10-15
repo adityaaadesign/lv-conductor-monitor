@@ -1,7 +1,7 @@
 // Builds the dashboard as plain files for Vercel (folder dist/). Nothing is compiled:
 // frontend/ and shared/ are copied, and config.js is written with the backend address.
 //
-//   API_BASE_URL=https://your-backend.onrender.com node tools/build-frontend.js
+//   API_BASE_URL=https://lv-monitor-api.<your-subdomain>.workers.dev node tools/build-frontend.js
 //
 // On Vercel, set API_BASE_URL in Project → Settings → Environment Variables.
 // Not needed on the laptop: there the server serves the dashboard itself.
@@ -16,7 +16,7 @@ const apiBase = (process.env.API_BASE_URL || '').trim().replace(/\/+$/, '');
 
 if (!/^https?:\/\/[^/\s]+$/.test(apiBase)) {
   console.error('API_BASE_URL is missing or wrong. Set it to the backend address only, for example');
-  console.error('  https://lv-monitor-api.onrender.com   (no /api/v1, no trailing slash)');
+  console.error('  https://lv-monitor-api.<your-subdomain>.workers.dev   (no /api/v1, no trailing slash)');
   process.exit(1);
 }
 

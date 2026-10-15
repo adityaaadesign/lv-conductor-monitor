@@ -9,7 +9,7 @@
 //  Structure – two tasks on the two processor cores:
 //    Core 1  measureTask : sample ADCs → RMS per cycle → local protection → relay
 //                          (never waits for Wi-Fi)
-//    Core 0  networkTask : JSON report → HTTP POST to the laptop; buffer when offline
+//    Core 0  networkTask : JSON report → HTTP(S) POST to the server; buffer when offline
 //  A FreeRTOS queue passes finished reports from core 1 to core 0.
 //
 //  Fill in config.h first. Build with the Arduino IDE + "esp32" boards package.
@@ -17,6 +17,7 @@
 #include <Arduino.h>
 #include <HTTPClient.h>
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <esp_system.h>
 #include <esp_timer.h>
 
@@ -117,20 +118,38 @@ static SendResult sendJson(const std::string& json) {
   if (!networkConfigured || WiFi.status() != WL_CONNECTED) return SendResult::UNREACHABLE;
   HTTPClient http;
   http.setTimeout(HTTP_TIMEOUT_MS);
-  if (!http.begin(SERVER_URL)) return SendResult::UNREACHABLE;
+  static WiFiClientSecure secureClient;
+  bool ok;
+  if (strncmp(SERVER_URL, "https://", 8) == 0) {
+    // HTTPS: the server certificate is checked against SERVER_ROOT_CA (config.h).
+    if (isPlaceholder(SERVER_ROOT_CA)) {
+      Serial.println("HTTPS URL but SERVER_ROOT_CA is not filled in (config.h) - report kept, not sent");
+      return SendResult::UNREACHABLE;
+    }
+    secureClient.setCACert(SERVER_ROOT_CA);
+    ok = http.begin(secureClient, SERVER_URL);
+  } else {
+    ok = http.begin(SERVER_URL);
+  }
+  if (!ok) return SendResult::UNREACHABLE;
   http.addHeader("Content-Type", "application/json");
   http.addHeader("X-Device-Key", DEVICE_KEY);
   const int code = http.POST(reinterpret_cast<uint8_t*>(const_cast<char*>(json.c_str())), json.size());
   String body = code > 0 ? http.getString() : String();
   http.end();
   if (code == 200) return SendResult::SENT;
-  if (code > 0) {
-    // 400/401/409/413: the server answered but refused. Resending the same report will not
+  if (code == 400 || code == 401 || code == 409 || code == 413) {
+    // The server answered but refused this report. Resending the same report will not
     // help, so it is not buffered. The answer explains which field is wrong.
     Serial.printf("SERVER REFUSED (HTTP %d): %s\n", code, body.c_str());
     return SendResult::REFUSED;
   }
-  return SendResult::UNREACHABLE;   // timeout / no connection
+  if (code > 0) {
+    // Any other answer (e.g. 429 / 5xx: busy, or over the free daily limit): keep the
+    // report and send it again later.
+    Serial.printf("SERVER BUSY (HTTP %d) - report kept for later\n", code);
+  }
+  return SendResult::UNREACHABLE;   // timeout / no connection / busy
 }
 
 static void ensureWifi() {

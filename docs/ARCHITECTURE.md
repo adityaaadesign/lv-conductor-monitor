@@ -301,13 +301,35 @@ Full rules are in [STATE_MACHINE.md](STATE_MACHINE.md); headlines:
 - Server time is the authoritative timeline (`received_at`); device time is stored
   only when the device reports it as synchronised.
 
+### 9.1 Online variant: Cloudflare Worker + D1 (added later)
+
+For the free online demonstration the LIVE backend also runs as a Cloudflare Worker
+(`cloudflare/`), with the dashboard on Vercel. Differences from the laptop server:
+
+- A Worker keeps no memory between requests and has no timer loop. Each request loads the
+  pipeline memory from D1 (`pipeline_state`), runs `tick(now)` and, for a report,
+  `ingestReport` – the **same** processing code – and saves the memory plus all new rows in one
+  D1 batch. A version number detects two requests saving at once; the later one retries.
+  A cron trigger runs the time check once a minute, so silent nodes are recorded without visitors.
+  A test runs all 18 scenarios with the memory saved and restored before every step and checks
+  that the results are identical.
+- Node STALE/OFFLINE is computed from the age of the last valid reading at the time of each
+  request, so event start times are accurate to the dashboard refresh (or 1 minute, cron).
+- No SSE: the dashboard polls `/status` (`live_updates.method = "poll"` in `/config`) and
+  re-reads the event list only when `events_version` changes.
+- D1 stores one `measurements` row per report (nodes as JSON) to stay inside the free write limit.
+- LIVE only: no simulator, no demo endpoints. DEMO stays on the laptop.
+
 ---
 
 ## 10. Security (prototype-appropriate)
 
-- Server binds to the LAN only; no port-forwarding or cloud exposure in v1.
+- Laptop server: binds to the LAN only. Online variant: the Cloudflare Worker is public, but
+  only devices with a key can add data, and only the configured dashboard address
+  (`ALLOWED_ORIGINS`) may read the API from a browser (CORS).
 - Each controller has a per-device key sent in an `X-Device-Key` header, stored
-  server-side in a git-ignored file. **No privileged keys in frontend code.**
+  server-side in a git-ignored file (laptop) or as a Cloudflare secret (`DEVICE_KEYS`).
+  **No privileged keys in frontend code.**
 - Strict validation of every incoming payload (types, ranges, known IDs, size limit
   16 KB); unknown fields ignored; rejections logged.
 - v1 dashboard is read-only. Control-like functions (reset request, acknowledgement)

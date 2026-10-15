@@ -2,7 +2,7 @@
 
 const JSON_COLUMNS = ['node_ids', 'measurement_snapshot', 'detection_reason', 'details'];
 
-const EVENT_COLUMNS = [
+export const EVENT_COLUMNS = [
   'event_type', 'severity', 'status', 'source', 'dedupe_key', 'start_ts', 'first_observed_ts',
   'end_ts', 'end_ts_quality', 'end_reason', 'duration_ms', 'node_ids', 'affected_section',
   'localization_status', 'measurement_snapshot', 'detection_reason', 'isolation_requested',
@@ -10,19 +10,43 @@ const EVENT_COLUMNS = [
   'unstable_recovery_count', 'related_event_id', 'acknowledged_ts', 'acknowledged_by', 'details',
 ];
 
-const toDb = (col, v) => {
+export const toDb = (col, v) => {
   if (v === undefined) return null;
   if (JSON_COLUMNS.includes(col)) return JSON.stringify(v ?? (col === 'node_ids' || col === 'detection_reason' ? [] : {}));
   if (typeof v === 'boolean') return v ? 1 : 0;
   return v;
 };
 
-function eventFromRow(row) {
+export function eventFromRow(row) {
   if (!row) return null;
   const e = { ...row };
   for (const c of JSON_COLUMNS) e[c] = e[c] ? JSON.parse(e[c]) : (c === 'node_ids' || c === 'detection_reason' ? [] : {});
   e.isolation_requested = e.isolation_requested === null ? null : e.isolation_requested === 1;
   return e;
+}
+
+// WHERE clause for the event list (also used by the Cloudflare Worker with D1).
+export function eventFilterSql(f) {
+  const where = ['source = ?'];
+  const args = [f.source];
+  if (f.from !== undefined && f.from !== null) { where.push('COALESCE(start_ts, created_ts) >= ?'); args.push(f.from); }
+  if (f.to !== undefined && f.to !== null) { where.push('COALESCE(start_ts, created_ts) <= ?'); args.push(f.to); }
+  if (f.type) { where.push('event_type = ?'); args.push(f.type); }
+  if (f.severity) { where.push('severity = ?'); args.push(f.severity); }
+  if (f.excludeInfo) where.push("severity <> 'INFO'");
+  if (f.status) { where.push('status = ?'); args.push(f.status); }
+  if (f.node) { where.push('node_ids LIKE ?'); args.push(`%"${f.node}"%`); }
+  if (f.q) {
+    const q = String(f.q).trim();
+    const idMatch = /^EV-?0*(\d+)$/i.exec(q);
+    if (idMatch) { where.push('event_id = ?'); args.push(Number(idMatch[1])); }
+    else {
+      where.push('(event_type LIKE ? OR affected_section LIKE ? OR node_ids LIKE ? OR detection_reason LIKE ? OR details LIKE ?)');
+      const like = `%${q}%`;
+      args.push(like, like, like, like, like);
+    }
+  }
+  return { sql: where.join(' AND '), args };
 }
 
 export class Repository {
@@ -165,31 +189,8 @@ export class Repository {
     this.stmts.insertTimeline.run(eventId, ts, kind, JSON.stringify(details ?? {}));
   }
 
-  #eventFilter(f) {
-    const where = ['source = ?'];
-    const args = [f.source];
-    if (f.from !== undefined && f.from !== null) { where.push('COALESCE(start_ts, created_ts) >= ?'); args.push(f.from); }
-    if (f.to !== undefined && f.to !== null) { where.push('COALESCE(start_ts, created_ts) <= ?'); args.push(f.to); }
-    if (f.type) { where.push('event_type = ?'); args.push(f.type); }
-    if (f.severity) { where.push('severity = ?'); args.push(f.severity); }
-    if (f.excludeInfo) where.push("severity <> 'INFO'");
-    if (f.status) { where.push('status = ?'); args.push(f.status); }
-    if (f.node) { where.push('node_ids LIKE ?'); args.push(`%"${f.node}"%`); }
-    if (f.q) {
-      const q = String(f.q).trim();
-      const idMatch = /^EV-?0*(\d+)$/i.exec(q);
-      if (idMatch) { where.push('event_id = ?'); args.push(Number(idMatch[1])); }
-      else {
-        where.push('(event_type LIKE ? OR affected_section LIKE ? OR node_ids LIKE ? OR detection_reason LIKE ? OR details LIKE ?)');
-        const like = `%${q}%`;
-        args.push(like, like, like, like, like);
-      }
-    }
-    return { sql: where.join(' AND '), args };
-  }
-
   queryEvents(f) {
-    const { sql, args } = this.#eventFilter(f);
+    const { sql, args } = eventFilterSql(f);
     const total = this.db.prepare(`SELECT COUNT(*) AS n FROM events WHERE ${sql}`).get(...args).n;
     const limit = Math.min(Math.max(1, Number(f.limit) || 50), 1000);
     const offset = Math.max(0, Number(f.offset) || 0);

@@ -1,0 +1,38 @@
+# Cloudflare Worker = the LIVE backend (API + detection). Database: Cloudflare D1.
+# Works on the FREE plan. Steps: docs/DEPLOYMENT.md.
+#
+# Secrets are NOT written here (this file is in GitHub). Set the device key with:
+#   npx wrangler secret put DEVICE_KEYS        (value: CTRL-01=<your key>)
+
+name = "lv-monitor-api"
+main = "src/worker.js"
+compatibility_date = "2025-06-01"
+workers_dev = true
+send_metrics = false   # do not send Wrangler usage statistics
+
+# Check the timers once a minute even when nobody has the dashboard open
+# (records "Node offline" / "Controller communication lost" in the history).
+[triggers]
+crons = ["* * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "lv-monitor"
+# Paste the database_id printed by:  npx wrangler d1 create lv-monitor
+database_id = "PASTE_YOUR_D1_DATABASE_ID_HERE"
+migrations_dir = "migrations"
+
+[vars]
+# Your Vercel dashboard address(es), comma separated, no slash at the end.
+# Only these addresses may read the API from a browser (CORS).
+ALLOWED_ORIGINS = "https://lv-conductor-monitor.vercel.app"
+
+# Communication timing – PLACEHOLDERS for the demonstration (not electrical thresholds).
+# REPORT_INTERVAL_MS must match REPORT_INTERVAL_MS in firmware/esp32-controller/config.h.
+REPORT_INTERVAL_MS = "5000"            # the ESP32 sends one report every 5 s
+STALE_AFTER_MS = "12000"               # no valid reading for 12 s -> Stale Data
+OFFLINE_AFTER_MS = "30000"             # no valid reading for 30 s -> Offline
+CONTROLLER_OFFLINE_AFTER_MS = "30000"  # no report at all for 30 s -> controller offline
+
+# How often the dashboard asks for new data (milliseconds, at least 2000).
+DASHBOARD_REFRESH_MS = "5000"
