@@ -1,0 +1,6 @@
+# Keep LF line endings in the repository and in every checkout (also on Windows),
+# so tests that read the docs and the Linux builds on Vercel/Cloudflare see the same files.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary

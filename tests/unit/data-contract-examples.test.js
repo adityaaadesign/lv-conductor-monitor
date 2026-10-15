@@ -9,7 +9,8 @@ import { buildTopology } from '../../server/config/load-config.js';
 import { testConfig, T0 } from '../helpers.js';
 
 const cfg = testConfig();
-const doc = readFileSync(path.join(cfg.projectRoot, 'docs', 'DATA_CONTRACT.md'), 'utf8');
+// Line endings may be CRLF (Windows checkout) or LF.
+const doc = readFileSync(path.join(cfg.projectRoot, 'docs', 'DATA_CONTRACT.md'), 'utf8').replace(/\r\n/g, '\n');
 const examples = [...doc.matchAll(/```json\n([\s\S]*?)```/g)]
   .map((m) => JSON.parse(m[1]))
   .filter((x) => x.schema_version);
@@ -34,7 +35,7 @@ test('every example report passes validation', () => {
 });
 
 test('the example in HARDWARE_INTEGRATION.md (the firmware handover) passes validation', () => {
-  const handover = readFileSync(path.join(cfg.projectRoot, 'docs', 'HARDWARE_INTEGRATION.md'), 'utf8');
+  const handover = readFileSync(path.join(cfg.projectRoot, 'docs', 'HARDWARE_INTEGRATION.md'), 'utf8').replace(/\r\n/g, '\n');
   const ex = [...handover.matchAll(/```json\n([\s\S]*?)```/g)].map((m) => JSON.parse(m[1])).find((x) => x.schema_version);
   assert.ok(ex, 'handover document must contain an example report');
   const v = validateReport(ex, cfg, T0);
