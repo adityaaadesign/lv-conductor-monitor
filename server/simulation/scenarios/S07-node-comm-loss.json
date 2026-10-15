@@ -1,0 +1,28 @@
+{
+  "id": "S07",
+  "title": "Node C communication loss",
+  "category": "Data quality",
+  "description": "Node C stops appearing in the reports for 25 s (e.g. a wiring or link fault), then returns. The feeder itself is electrically normal throughout.",
+  "what_to_look_for": [
+    "Node C goes Stale after 3 s and Offline after 10 s (placeholders).",
+    "Feeder: DEGRADED — explicitly not an interruption, because missing data is not evidence of lost supply.",
+    "One NODE_OFFLINE event, closed when Node C returns."
+  ],
+  "duration_ms": 45000,
+  "seed": 7,
+  "controller": {},
+  "steps": [
+    { "at_ms": 10000, "action": "node_link", "node": "N-C", "lost": true, "note": "Node C stops reporting" },
+    { "at_ms": 35000, "action": "node_link", "node": "N-C", "lost": false, "note": "Node C reporting again" }
+  ],
+  "expect": {
+    "states": ["INITIALIZING", "NORMAL", "DEGRADED", "NORMAL"],
+    "events": { "NODE_OFFLINE": 1 },
+    "never_states": ["INTERRUPTION_SUSPECTED", "ISOLATION_PENDING"],
+    "event_checks": [
+      { "event_type": "NODE_OFFLINE", "field": "node_ids", "equals": ["N-C"] },
+      { "event_type": "NODE_OFFLINE", "field": "status", "equals": "CLOSED" }
+    ],
+    "final_status": { "status": "NORMAL" }
+  }
+}

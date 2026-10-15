@@ -1,0 +1,84 @@
+{
+  "id": "S16",
+  "title": "Line interruption between Node A and Node B (shutdown confirmed)",
+  "category": "Test button",
+  "description": "After 3 s the simulated conductor between Node A and Node B parts. Node A keeps voltage; Nodes B and C lose it. The simulated controller orders its switch to open and the switch's feedback signal reports OPEN.",
+  "what_to_look_for": [
+    "Status goes to ISOLATION PENDING for about a second, then ISOLATED.",
+    "The faulty section is shown between Node A and Node B.",
+    "Shutdown commanded: Yes. Switch feedback confirms: Yes."
+  ],
+  "duration_ms": 20000,
+  "seed": 16,
+  "controller": {
+    "feedback": "FITTED"
+  },
+  "steps": [
+    {
+      "at_ms": 3000,
+      "action": "break_section",
+      "section": "S-AB",
+      "note": "Simulated conductor parts between Node A and Node B"
+    }
+  ],
+  "button": {
+    "order": 3,
+    "label": "Suspected Line Interruption",
+    "does": "After 3 s the simulated wire between Node A and Node B breaks. The simulated controller commands a shutdown and the simulated switch confirms it opened.",
+    "wait": "Results appear about 4–5 s after pressing.",
+    "checks": [
+      {
+        "text": "Status: ISOLATED.",
+        "path": "display_status",
+        "equals": "ISOLATED"
+      },
+      {
+        "text": "Fault location: Possible interruption between Node A and Node B (estimate).",
+        "path": "affected_section",
+        "equals": "S-AB"
+      },
+      {
+        "text": "Isolation command: Command issued.",
+        "path": "isolation_command_state",
+        "equals": "COMMANDED"
+      },
+      {
+        "text": "Switch feedback: Confirmed open.",
+        "path": "isolation_feedback_state",
+        "equals": "OPEN"
+      },
+      {
+        "text": "A 'Line interruption suspected' event appears.",
+        "active_event": "INTERRUPTION_SUSPECTED"
+      }
+    ]
+  },
+  "expect": {
+    "states": [
+      "INITIALIZING",
+      "NORMAL",
+      "ISOLATION_PENDING",
+      "ISOLATED"
+    ],
+    "events": {
+      "INTERRUPTION_SUSPECTED": 1
+    },
+    "event_checks": [
+      {
+        "event_type": "INTERRUPTION_SUSPECTED",
+        "field": "affected_section",
+        "equals": "S-AB"
+      },
+      {
+        "event_type": "INTERRUPTION_SUSPECTED",
+        "field": "isolation_confirmed",
+        "equals": "CONFIRMED"
+      }
+    ],
+    "final_status": {
+      "display_status": "ISOLATED",
+      "affected_section": "S-AB",
+      "isolation_feedback_state": "OPEN"
+    }
+  }
+}

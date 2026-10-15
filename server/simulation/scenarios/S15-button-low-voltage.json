@@ -1,0 +1,73 @@
+{
+  "id": "S15",
+  "title": "Low voltage at Node C (stays low)",
+  "category": "Test button",
+  "description": "After 3 s a heavy simulated load pulls Node C down to about 184 V (80 % of 230 V) and keeps it there.",
+  "what_to_look_for": [
+    "Node C changes to 'Checking…' and then to 'Low voltage'.",
+    "The status becomes FAULT SUSPECTED; no shutdown is ordered because the supply is still present."
+  ],
+  "duration_ms": 20000,
+  "seed": 15,
+  "controller": {},
+  "steps": [
+    {
+      "at_ms": 3000,
+      "action": "set_node_drop",
+      "node": "N-C",
+      "pu": 0.2,
+      "note": "Node C voltage falls to about 184 V"
+    }
+  ],
+  "button": {
+    "order": 2,
+    "label": "Low Voltage",
+    "does": "After 3 s, Node C's voltage drops to about 184 V and stays low.",
+    "wait": "Node C turns amber after about 4 s; the fault is confirmed after about 7 s (the voltage must stay low for 3 s first).",
+    "checks": [
+      {
+        "text": "Status: FAULT SUSPECTED.",
+        "path": "display_status",
+        "equals": "FAULT_SUSPECTED"
+      },
+      {
+        "text": "Node C shows Low Voltage (about 184 V).",
+        "path": "nodes.N-C.display_state",
+        "equals": "LOW_VOLTAGE"
+      },
+      {
+        "text": "Node A still shows Normal.",
+        "path": "nodes.N-A.display_state",
+        "equals": "NORMAL"
+      },
+      {
+        "text": "Node B still shows Normal.",
+        "path": "nodes.N-B.display_state",
+        "equals": "NORMAL"
+      },
+      {
+        "text": "Isolation command: Not requested (low voltage alone does not cause a shutdown).",
+        "path": "isolation_command_state",
+        "equals": "NONE"
+      },
+      {
+        "text": "A 'Low voltage' event appears.",
+        "active_event": "UNDERVOLTAGE"
+      }
+    ]
+  },
+  "expect": {
+    "states": [
+      "INITIALIZING",
+      "NORMAL",
+      "UNDERVOLTAGE"
+    ],
+    "events": {
+      "UNDERVOLTAGE": 1
+    },
+    "final_status": {
+      "display_status": "FAULT_SUSPECTED",
+      "isolation_command_state": "NONE"
+    }
+  }
+}

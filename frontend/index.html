@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Line Break Monitor</title>
+  <meta name="description" content="Monitoring dashboard for a low-voltage overhead conductor breakage detection prototype.">
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/app.css">
+  <script src="/config.js"></script>
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">⚡</span>
+      <div>
+        <h1>Overhead Line Break Monitor</h1>
+        <div class="sub">Low-voltage conductor breakage detection</div>
+      </div>
+    </div>
+    <div class="top-right">
+      <span id="mode-badge" class="mode-badge" hidden></span>
+      <span id="connection" class="connection" role="status"><span class="dot"></span>Connecting…</span>
+    </div>
+  </header>
+
+  <!-- Safety notices: always visible, never inside a dropdown -->
+  <div id="demo-strip" class="strip demo" hidden><b>DEMO MODE</b> All readings and switch signals are simulated · no real switch can be operated</div>
+  <div id="live-strip" class="strip live" hidden><b>LIVE MODE</b> <span id="live-strip-text">Hardware integration not yet tested</span></div>
+  <div id="storage-strip" class="strip warn" role="alert" hidden></div>
+  <div id="conn-strip" class="strip warn" role="alert" hidden></div>
+
+  <main id="main" class="main"><div class="loading">Loading…</div></main>
+
+  <footer class="foot">
+    Academic prototype for an isolated low-voltage test setup – not certified protection equipment.
+    Shutdown decisions are made by the protection controller, not by this page.
+  </footer>
+</body>
+</html>

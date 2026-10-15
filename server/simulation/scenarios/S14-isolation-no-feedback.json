@@ -1,0 +1,26 @@
+{
+  "id": "S14",
+  "title": "Isolation commanded, no feedback contact fitted",
+  "category": "Isolation",
+  "description": "Same break as S04, but the simulated hardware has no switch feedback contact (feedback NOT_FITTED). The relay does open, but nothing can confirm it.",
+  "what_to_look_for": [
+    "Feeder: 'Isolation commanded – not confirmed', with the explanation 'No feedback contact is fitted'.",
+    "Never shown as Isolated, even though the voltages fall to zero.",
+    "No ISOLATION_UNCONFIRMED alert (there is no feedback to time out); the event records 'Cannot confirm – no feedback fitted'."
+  ],
+  "duration_ms": 30000,
+  "seed": 14,
+  "controller": { "feedback": "NOT_FITTED" },
+  "steps": [
+    { "at_ms": 10000, "action": "break_section", "section": "S-AB", "note": "Conductor parts in section S-AB" }
+  ],
+  "expect": {
+    "states": ["INITIALIZING", "NORMAL", "ISOLATION_PENDING"],
+    "events": { "INTERRUPTION_SUSPECTED": 1 },
+    "never_states": ["ISOLATED"],
+    "event_checks": [
+      { "event_type": "INTERRUPTION_SUSPECTED", "field": "isolation_confirmed", "equals": "NO_FEEDBACK_FITTED" }
+    ],
+    "final_status": { "status": "ISOLATION_PENDING", "isolation_feedback_state": "NOT_FITTED" }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "S08",
+  "title": "Interruption, isolation, then unstable recovery",
+  "category": "Recovery",
+  "description": "Section A–B parts and the controller isolates. The section is repaired and the local reset button pressed. After reclose the repaired joint is intermittent: supply to B and C drops out twice (500 ms and 300 ms) before holding.",
+  "what_to_look_for": [
+    "RESTORATION PENDING after the local reset (the dashboard does not and cannot reclose anything).",
+    "RECOVERY CHECK starts; each dropout sends the feeder back to INTERRUPTION SUSPECTED and resets the stability timer.",
+    "The same single event continues; its unstable-recovery count reaches 2.",
+    "Finally RESTORED and NORMAL after 10 s of continuous stable supply."
+  ],
+  "duration_ms": 68000,
+  "seed": 8,
+  "controller": { "feedback": "FITTED" },
+  "steps": [
+    { "at_ms": 10000, "action": "break_section", "section": "S-AB", "note": "Conductor parts in section S-AB" },
+    { "at_ms": 30000, "action": "repair_section", "section": "S-AB", "note": "Section repaired (feeder still isolated)" },
+    { "at_ms": 32000, "action": "local_reset", "note": "Operator presses the LOCAL reset button on the controller" },
+    { "at_ms": 40000, "action": "break_section", "section": "S-AB", "note": "Intermittent joint: supply drops out" },
+    { "at_ms": 40500, "action": "repair_section", "section": "S-AB", "note": "…and comes back after 500 ms" },
+    { "at_ms": 46000, "action": "break_section", "section": "S-AB", "note": "Drops out again" },
+    { "at_ms": 46300, "action": "repair_section", "section": "S-AB", "note": "…back after 300 ms, then holds" }
+  ],
+  "expect": {
+    "states": [
+      "INITIALIZING", "NORMAL", "ISOLATION_PENDING", "ISOLATED", "RESTORATION_PENDING", "RECOVERY_CHECK",
+      "INTERRUPTION_SUSPECTED", "RECOVERY_CHECK", "INTERRUPTION_SUSPECTED", "RECOVERY_CHECK", "RESTORED", "NORMAL"
+    ],
+    "events": { "INTERRUPTION_SUSPECTED": 1 },
+    "event_checks": [
+      { "event_type": "INTERRUPTION_SUSPECTED", "field": "unstable_recovery_count", "equals": 2 },
+      { "event_type": "INTERRUPTION_SUSPECTED", "field": "status", "equals": "CLOSED" },
+      { "event_type": "INTERRUPTION_SUSPECTED", "field": "isolation_confirmed", "equals": "CONFIRMED" },
+      { "event_type": "INTERRUPTION_SUSPECTED", "field": "recovery_status", "equals": "RESTORED" }
+    ],
+    "final_status": { "status": "NORMAL" }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "_comment": [
+    "Server settings. host 127.0.0.1 means only this laptop can open the dashboard.",
+    "Phase 4 (hardware) will need 0.0.0.0 so the ESP32 can reach the server on the LAN."
+  ],
+  "host": "127.0.0.1",
+  "port": 8080,
+  "data_dir": "data",
+  "retention": {
+    "measurements_days": 14,
+    "rejections_days": 7
+  },
+  "device_time_tolerance_ms": 5000,
+  "status_push_min_interval_ms": 300,
+  "simulation": {
+    "auto_start_scenario": "S01",
+    "default_speed": 1,
+    "allowed_speeds": [1, 2, 5, 10]
+  }
+}

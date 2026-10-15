@@ -1,0 +1,28 @@
+# Installed packages (recreated by npm install)
+node_modules/
+
+# Local databases (data/sim.db, data/live.db) and any other SQLite files
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# Secrets – never commit real keys or passwords
+config/devices.local.json
+.env
+.env.*
+firmware/**/secrets.h
+
+# Build output and hosting tool folders
+dist/
+.vercel/
+
+# Logs and editor/OS clutter
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Local Claude Code / tool settings
+.claude/

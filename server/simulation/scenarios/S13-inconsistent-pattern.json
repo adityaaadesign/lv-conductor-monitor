@@ -1,0 +1,28 @@
+{
+  "id": "S13",
+  "title": "Inconsistent pattern: Node B reads 0 V but Node C has supply",
+  "category": "Data quality",
+  "description": "Node B's sensing lead comes loose: it reads about 0 V while still reporting sensor OK. Node C, downstream of B, still has normal voltage — physically impossible in a radial feeder if B truly had no supply.",
+  "what_to_look_for": [
+    "Location: 'Inconsistent pattern – no section claimed'.",
+    "Feeder: DEGRADED, not INTERRUPTION SUSPECTED. The virtual controller does not trip either.",
+    "One MEASUREMENT_INCONSISTENT event naming Node B as the suspect."
+  ],
+  "duration_ms": 45000,
+  "seed": 13,
+  "controller": {},
+  "steps": [
+    { "at_ms": 10000, "action": "sensor_fault", "node": "N-B", "mode": "READS_ZERO", "note": "Node B sensing lead loose: reads ~0 V, status still OK" },
+    { "at_ms": 30000, "action": "clear_sensor_fault", "node": "N-B", "note": "Lead reconnected" }
+  ],
+  "expect": {
+    "states": ["INITIALIZING", "NORMAL", "DEGRADED", "NORMAL"],
+    "events": { "MEASUREMENT_INCONSISTENT": 1 },
+    "never_states": ["INTERRUPTION_SUSPECTED", "ISOLATION_PENDING"],
+    "event_checks": [
+      { "event_type": "MEASUREMENT_INCONSISTENT", "field": "status", "equals": "CLOSED" },
+      { "event_type": "MEASUREMENT_INCONSISTENT", "field": "node_ids", "includes": "N-B" }
+    ],
+    "final_status": { "status": "NORMAL" }
+  }
+}

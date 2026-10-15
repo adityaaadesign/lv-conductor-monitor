@@ -1,0 +1,82 @@
+{
+  "id": "S18",
+  "title": "Node C communication failure (stays offline)",
+  "category": "Test button",
+  "description": "After 3 s Node C stops sending readings. The line itself is electrically normal.",
+  "what_to_look_for": [
+    "Node C shows 'No data' – not 0 V.",
+    "Status DEGRADED / UNKNOWN – not FAULT SUSPECTED, because missing data is not evidence of a broken line."
+  ],
+  "duration_ms": 20000,
+  "seed": 18,
+  "controller": {},
+  "steps": [
+    {
+      "at_ms": 3000,
+      "action": "node_link",
+      "node": "N-C",
+      "lost": true,
+      "note": "Node C stops sending readings"
+    }
+  ],
+  "button": {
+    "order": 5,
+    "label": "Node Communication Failure",
+    "does": "After 3 s, Node C stops sending readings. The simulated line itself stays normal.",
+    "wait": "Node C shows Stale Data after about 6 s and Offline after about 13 s; the 'Node offline' event appears then.",
+    "checks": [
+      {
+        "text": "Status: DEGRADED / UNKNOWN (not FAULT SUSPECTED).",
+        "path": "display_status",
+        "equals": "DEGRADED_UNKNOWN"
+      },
+      {
+        "text": "Node C shows Stale Data, then Offline – no voltage number, never 0 V.",
+        "path": "nodes.N-C.display_state",
+        "equals": "NO_DATA"
+      },
+      {
+        "text": "Node C is marked Offline (no valid report for more than 10 s).",
+        "path": "nodes.N-C.validity",
+        "equals": "OFFLINE"
+      },
+      {
+        "text": "Node A still shows Normal.",
+        "path": "nodes.N-A.display_state",
+        "equals": "NORMAL"
+      },
+      {
+        "text": "Fault location: No interruption detected (a silent node is not treated as lost supply).",
+        "path": "affected_section",
+        "equals": null
+      },
+      {
+        "text": "Isolation command: Not requested.",
+        "path": "isolation_command_state",
+        "equals": "NONE"
+      },
+      {
+        "text": "A 'Node offline (no data)' event appears (after about 10 s).",
+        "active_event": "NODE_OFFLINE"
+      }
+    ]
+  },
+  "expect": {
+    "states": [
+      "INITIALIZING",
+      "NORMAL",
+      "DEGRADED"
+    ],
+    "events": {
+      "NODE_OFFLINE": 1
+    },
+    "never_states": [
+      "INTERRUPTION_SUSPECTED",
+      "ISOLATION_PENDING"
+    ],
+    "final_status": {
+      "display_status": "DEGRADED_UNKNOWN",
+      "affected_section": null
+    }
+  }
+}

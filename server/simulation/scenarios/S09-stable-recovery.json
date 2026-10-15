@@ -1,0 +1,32 @@
+{
+  "id": "S09",
+  "title": "Interruption, isolation, then stable recovery",
+  "category": "Recovery",
+  "description": "Section A–B parts, the controller isolates, the section is repaired and the local reset button pressed. Supply returns and stays stable.",
+  "what_to_look_for": [
+    "ISOLATED → RESTORATION PENDING (local reset) → RECOVERY CHECK with a 10 s progress bar → RESTORED → NORMAL.",
+    "Voltage returning is not treated as proof that restoration is safe: the controller decides when to reclose; the server only reports it.",
+    "The event closes; its end time is when supply returned (start of the stable window), not when the timer finished."
+  ],
+  "duration_ms": 55000,
+  "seed": 9,
+  "controller": { "feedback": "FITTED" },
+  "steps": [
+    { "at_ms": 10000, "action": "break_section", "section": "S-AB", "note": "Conductor parts in section S-AB" },
+    { "at_ms": 30000, "action": "repair_section", "section": "S-AB", "note": "Section repaired (feeder still isolated)" },
+    { "at_ms": 32000, "action": "local_reset", "note": "Operator presses the LOCAL reset button on the controller" }
+  ],
+  "expect": {
+    "states": [
+      "INITIALIZING", "NORMAL", "ISOLATION_PENDING", "ISOLATED", "RESTORATION_PENDING", "RECOVERY_CHECK", "RESTORED", "NORMAL"
+    ],
+    "events": { "INTERRUPTION_SUSPECTED": 1 },
+    "event_checks": [
+      { "event_type": "INTERRUPTION_SUSPECTED", "field": "status", "equals": "CLOSED" },
+      { "event_type": "INTERRUPTION_SUSPECTED", "field": "unstable_recovery_count", "equals": 0 },
+      { "event_type": "INTERRUPTION_SUSPECTED", "field": "end_ts", "relative_equals": 35000 },
+      { "event_type": "INTERRUPTION_SUSPECTED", "field": "end_ts_quality", "equals": "EXACT" }
+    ],
+    "final_status": { "status": "NORMAL" }
+  }
+}

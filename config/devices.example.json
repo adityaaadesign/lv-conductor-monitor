@@ -1,0 +1,10 @@
+{
+  "_comment": [
+    "LIVE mode only. Copy this file to devices.local.json (that file is ignored by git)",
+    "and replace the value with your own random text of at least 16 characters.",
+    "The same text must be configured in the controller firmware and sent in the",
+    "X-Device-Key HTTP header with every report. Without devices.local.json the",
+    "server refuses all real-device reports."
+  ],
+  "CTRL-01": "change-me-to-your-own-long-random-text"
+}

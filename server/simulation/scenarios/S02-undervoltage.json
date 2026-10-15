@@ -1,0 +1,28 @@
+{
+  "id": "S02",
+  "title": "Sustained undervoltage at Node C",
+  "category": "Undervoltage",
+  "description": "A heavy simulated load drops Node C to about 0.80 pu for 20 s, then the load is removed.",
+  "what_to_look_for": [
+    "Node C turns amber 'Low – confirming', then 'Undervoltage' after the persistence time (placeholder 3 s).",
+    "One UNDERVOLTAGE event for Node C, not one per sample.",
+    "After the load is removed: RECOVERY CHECK with a 10 s stability timer, then RESTORED, then NORMAL; the event closes with an end time equal to the start of the stable window."
+  ],
+  "duration_ms": 50000,
+  "seed": 2,
+  "controller": {},
+  "steps": [
+    { "at_ms": 10000, "action": "set_node_drop", "node": "N-C", "pu": 0.2, "note": "Heavy load at Node C: voltage falls to about 0.80 pu" },
+    { "at_ms": 30000, "action": "set_node_drop", "node": "N-C", "pu": 0.016, "note": "Load removed: Node C back to normal" }
+  ],
+  "expect": {
+    "states": ["INITIALIZING", "NORMAL", "UNDERVOLTAGE", "RECOVERY_CHECK", "RESTORED", "NORMAL"],
+    "events": { "UNDERVOLTAGE": 1 },
+    "event_checks": [
+      { "event_type": "UNDERVOLTAGE", "field": "status", "equals": "CLOSED" },
+      { "event_type": "UNDERVOLTAGE", "field": "end_reason", "equals": "RECOVERY_STABLE" },
+      { "event_type": "UNDERVOLTAGE", "field": "node_ids", "equals": ["N-C"] }
+    ],
+    "final_status": { "status": "NORMAL" }
+  }
+}

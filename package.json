@@ -1,0 +1,24 @@
+{
+  "name": "lv-conductor-monitor",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Supervisory monitoring software and dashboard for the BE ENTC project: Detection of Breakage in Low-Voltage AC Distributed Overhead Conductors",
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "sim": "node --disable-warning=ExperimentalWarning server/index.js --mode sim",
+    "start": "node --disable-warning=ExperimentalWarning server/index.js --mode live",
+    "test": "node --disable-warning=ExperimentalWarning --test --test-reporter=spec \"tests/**/*.test.js\"",
+    "scenario": "node --disable-warning=ExperimentalWarning tools/run-scenario.js",
+    "send-test": "node --disable-warning=ExperimentalWarning tools/send-test-telemetry.js",
+    "check-report": "node --disable-warning=ExperimentalWarning tools/check-report.js",
+    "calibrate": "node --disable-warning=ExperimentalWarning tools/calibrate.js",
+    "api-check": "node --disable-warning=ExperimentalWarning tools/api-check.js",
+    "firmware-test": "node --disable-warning=ExperimentalWarning --test --test-reporter=spec tests/firmware/firmware-core.test.js"
+  },
+  "dependencies": {
+    "express": "^4.22.3"
+  }
+}

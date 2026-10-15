@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LV Feeder Monitor</title>
+  <meta name="description" content="Supervisory monitoring dashboard for a low-voltage overhead conductor breakage detection prototype.">
+  <link rel="stylesheet" href="/css/tokens.css">
+  <link rel="stylesheet" href="/css/app.css">
+  <script src="/vendor/chart.umd.min.js" defer></script>
+  <script type="module" src="/js/app.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">⏚</span>
+      <div>
+        <div class="brand-title">LV Feeder Conductor Monitor</div>
+        <div class="brand-sub" id="feeder-name">Connecting…</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="header-status" class="header-status" aria-live="polite"></div>
+      <div id="connection" class="connection" role="status">Connecting…</div>
+    </div>
+  </header>
+
+  <div id="mode-banner" class="mode-banner" hidden></div>
+  <div id="conn-banner" class="conn-banner" role="alert" hidden></div>
+
+  <nav class="tabs" aria-label="Pages">
+    <a href="#/overview" data-page="overview">Overview</a>
+    <a href="#/topology" data-page="topology">Topology &amp; location</a>
+    <a href="#/events" data-page="events">Event history</a>
+    <a href="#/trends" data-page="trends">Trends &amp; diagnostics</a>
+    <a href="#/simulation" data-page="simulation" id="nav-sim" hidden>Simulation</a>
+  </nav>
+
+  <main id="page" class="page" tabindex="-1">
+    <div class="loading">Loading dashboard…</div>
+  </main>
+
+  <footer class="app-footer">
+    Supervisory monitoring prototype for an isolated, current-limited LV test feeder. Not a certified protection device.
+    Protection runs on the embedded controller; this dashboard only observes and reports.
+  </footer>
+</body>
+</html>

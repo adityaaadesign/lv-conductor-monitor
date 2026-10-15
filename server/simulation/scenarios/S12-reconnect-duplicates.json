@@ -1,0 +1,24 @@
+{
+  "id": "S12",
+  "title": "Reconnect with buffered, late and duplicate reports",
+  "category": "Data quality",
+  "description": "The link drops for 5 s while the controller buffers its reports. On reconnect it sends the newest report first, then the 5 buffered ones (late), then re-sends 2 reports (duplicates).",
+  "what_to_look_for": [
+    "Feeder: briefly UNKNOWN (no fresh data from any node), then NORMAL.",
+    "Diagnostics page: 5 late reports stored as history, 2 duplicates ignored.",
+    "No events at all: late and duplicate data never drive the current state."
+  ],
+  "duration_ms": 25000,
+  "seed": 12,
+  "controller": {},
+  "steps": [
+    { "at_ms": 10000, "action": "controller_link", "up": false, "buffer": true, "note": "Link drops; controller buffers reports" },
+    { "at_ms": 15000, "action": "controller_link", "up": true, "replay_duplicates": 2, "note": "Link restored; backlog and 2 duplicates follow the newest report" }
+  ],
+  "expect": {
+    "states": ["INITIALIZING", "NORMAL", "UNKNOWN", "INITIALIZING", "NORMAL"],
+    "events": {},
+    "diagnostics": { "late": 5, "duplicates": 2 },
+    "final_status": { "status": "NORMAL" }
+  }
+}

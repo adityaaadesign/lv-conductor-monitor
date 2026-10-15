@@ -1,0 +1,32 @@
+{
+  "_comment": [
+    "Detection thresholds and timers. EVERY value here is a PLACEHOLDER chosen only so the simulator runs.",
+    "Before any measured test, set them from: the sensor reading with supply removed (noise floor),",
+    "the normal variation of the test supply, the firmware report interval, and the relay operate time.",
+    "Voltage thresholds are per-unit (pu) of nominal_voltage_v in feeder.json.",
+    "See docs/STATE_MACHINE.md section 2 for what each parameter does."
+  ],
+
+  "uv_pickup_pu":       { "value": 0.90, "unit": "pu", "placeholder": true, "note": "Enter LOW band below this." },
+  "uv_dropout_pu":      { "value": 0.93, "unit": "pu", "placeholder": true, "note": "Leave LOW band at or above this (hysteresis)." },
+  "loss_pickup_pu":     { "value": 0.10, "unit": "pu", "placeholder": true, "note": "Enter ABSENT band below this. Must be above the sensor noise floor." },
+  "loss_dropout_pu":    { "value": 0.15, "unit": "pu", "placeholder": true, "note": "Leave ABSENT band at or above this." },
+  "transient_dip_pu":   { "value": 0.80, "unit": "pu", "placeholder": true, "note": "A dip below this (sample or per-cycle minimum) counts as a transient." },
+
+  "uv_persistence_ms":         { "value": 3000,  "unit": "ms", "placeholder": true, "note": "LOW must persist this long to confirm undervoltage." },
+  "loss_persistence_ms":       { "value": 2000,  "unit": "ms", "placeholder": true, "note": "ABSENT must persist this long to confirm supply loss." },
+  "recovery_stability_ms":     { "value": 10000, "unit": "ms", "placeholder": true, "note": "Supply must stay normal this long to be called stable." },
+  "restored_hold_ms":          { "value": 5000,  "unit": "ms", "placeholder": true, "note": "RESTORED is shown this long before the event closes." },
+  "reclose_supply_timeout_ms": { "value": 5000,  "unit": "ms", "placeholder": true, "note": "After a reported reclose, supply must return within this time." },
+
+  "expected_report_interval_ms":  { "value": 1000,  "unit": "ms", "placeholder": true, "note": "Firmware report period (assumption A6)." },
+  "stale_after_ms":               { "value": 3000,  "unit": "ms", "placeholder": true, "note": "No valid data for this long -> STALE." },
+  "offline_after_ms":             { "value": 10000, "unit": "ms", "placeholder": true, "note": "No valid data for this long -> OFFLINE." },
+  "controller_offline_after_ms":  { "value": 10000, "unit": "ms", "placeholder": true, "note": "No report from a controller for this long -> controller offline." },
+  "init_timeout_ms":              { "value": 15000, "unit": "ms", "placeholder": true, "note": "Max time in INITIALIZING before DEGRADED/UNKNOWN." },
+  "isolation_feedback_timeout_ms":{ "value": 3000,  "unit": "ms", "placeholder": true, "note": "Feedback must report OPEN this soon after isolation is commanded." },
+  "transient_display_hold_ms":    { "value": 5000,  "unit": "ms", "placeholder": true, "note": "How long the feeder shows TRANSIENT." },
+  "transient_max_events_per_min": { "value": 6,     "unit": "count", "placeholder": true, "note": "Per feeder; extra dips are counted on the last event." },
+  "protection_disagreement_ms":   { "value": 5000,  "unit": "ms", "placeholder": true, "note": "Controller/server supply judgements must differ this long to log it." },
+  "tick_interval_ms":             { "value": 250,   "unit": "ms", "placeholder": false, "note": "Software re-evaluation period for timers (not a hardware setting)." }
+}

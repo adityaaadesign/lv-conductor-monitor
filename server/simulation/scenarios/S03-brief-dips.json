@@ -1,0 +1,27 @@
+{
+  "id": "S03",
+  "title": "Brief voltage drops followed by recovery",
+  "category": "Transient",
+  "description": "Two source-side dips: a 100 ms dip to 0.55 pu (shorter than one report, visible only in the per-cycle minimum) and a 600 ms dip to 0.60 pu (lowers the report average).",
+  "what_to_look_for": [
+    "Feeder shows 'Brief voltage dip' twice, then returns to NORMAL each time.",
+    "Two TRANSIENT_DIP events, each grouping all three nodes (a source dip is seen everywhere).",
+    "No UNDERVOLTAGE or interruption event: the dips clear before the persistence time.",
+    "The first event says its duration is unknown (below report resolution)."
+  ],
+  "duration_ms": 32000,
+  "seed": 3,
+  "controller": {},
+  "steps": [
+    { "at_ms": 10300, "action": "set_source", "pu": 0.55, "note": "Source dips to 0.55 pu" },
+    { "at_ms": 10400, "action": "set_source", "pu": 1.0, "note": "Source recovers after 100 ms" },
+    { "at_ms": 20300, "action": "set_source", "pu": 0.6, "note": "Source dips to 0.60 pu" },
+    { "at_ms": 20900, "action": "set_source", "pu": 1.0, "note": "Source recovers after 600 ms" }
+  ],
+  "expect": {
+    "states": ["INITIALIZING", "NORMAL", "TRANSIENT", "NORMAL", "TRANSIENT", "NORMAL"],
+    "events": { "TRANSIENT_DIP": 2 },
+    "never_states": ["UNDERVOLTAGE", "INTERRUPTION_SUSPECTED"],
+    "final_status": { "status": "NORMAL" }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "id": "S01",
+  "title": "Normal operation",
+  "category": "Normal",
+  "description": "All three nodes report normal voltage. Natural voltage drop along the line is slightly larger at Node C.",
+  "what_to_look_for": [
+    "Feeder status goes INITIALIZING → NORMAL after the first report.",
+    "All node cards are green with live (simulated) voltages.",
+    "No events are created."
+  ],
+  "duration_ms": 20000,
+  "seed": 1,
+  "controller": {},
+  "steps": [],
+  "expect": {
+    "states": [
+      "INITIALIZING",
+      "NORMAL"
+    ],
+    "events": {},
+    "final_status": {
+      "status": "NORMAL",
+      "localization_status": "NOT_APPLICABLE",
+      "display_status": "NORMAL"
+    }
+  },
+  "button": {
+    "order": 1,
+    "label": "Normal Operation",
+    "does": "Resets the simulated line: all three monitoring points get normal voltage.",
+    "wait": "Results appear within about 2 seconds.",
+    "checks": [
+      {
+        "text": "Status: NORMAL.",
+        "path": "display_status",
+        "equals": "NORMAL"
+      },
+      {
+        "text": "Node A shows Normal.",
+        "path": "nodes.N-A.display_state",
+        "equals": "NORMAL"
+      },
+      {
+        "text": "Node B shows Normal.",
+        "path": "nodes.N-B.display_state",
+        "equals": "NORMAL"
+      },
+      {
+        "text": "Node C shows Normal.",
+        "path": "nodes.N-C.display_state",
+        "equals": "NORMAL"
+      },
+      {
+        "text": "Fault location: No interruption detected.",
+        "path": "affected_section",
+        "equals": null
+      },
+      {
+        "text": "Isolation command: Not requested.",
+        "path": "isolation_command_state",
+        "equals": "NONE"
+      },
+      {
+        "text": "No active events.",
+        "no_active_fault_events": true
+      }
+    ]
+  }
+}

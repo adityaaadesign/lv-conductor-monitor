@@ -1,0 +1,28 @@
+{
+  "id": "S10",
+  "title": "Isolation commanded but not confirmed (relay fails to open)",
+  "category": "Isolation",
+  "description": "Section A–B parts and the controller commands isolation, but the simulated relay contacts do not open. The feedback contact keeps reporting CLOSED.",
+  "what_to_look_for": [
+    "Feeder stays at 'Isolation commanded – not confirmed'. It is NEVER shown as Isolated.",
+    "After the feedback timeout (placeholder 3 s) an ISOLATION_UNCONFIRMED critical alert appears.",
+    "Node A keeps supply (the switch did not open)."
+  ],
+  "duration_ms": 30000,
+  "seed": 10,
+  "controller": { "feedback": "FITTED", "relay_fault": "FAILS_TO_OPEN" },
+  "steps": [
+    { "at_ms": 10000, "action": "break_section", "section": "S-AB", "note": "Conductor parts in section S-AB" }
+  ],
+  "expect": {
+    "states": ["INITIALIZING", "NORMAL", "ISOLATION_PENDING"],
+    "events": { "INTERRUPTION_SUSPECTED": 1, "ISOLATION_UNCONFIRMED": 1 },
+    "never_states": ["ISOLATED"],
+    "event_checks": [
+      { "event_type": "INTERRUPTION_SUSPECTED", "field": "isolation_requested", "equals": true },
+      { "event_type": "INTERRUPTION_SUSPECTED", "field": "isolation_confirmed", "equals": "NOT_CONFIRMED" },
+      { "event_type": "ISOLATION_UNCONFIRMED", "field": "status", "equals": "OPEN" }
+    ],
+    "final_status": { "status": "ISOLATION_PENDING", "isolation_feedback_state": "TIMEOUT", "isolation_confirmed": "NOT_CONFIRMED" }
+  }
+}

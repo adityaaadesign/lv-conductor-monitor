@@ -1,0 +1,57 @@
+{
+  "_comment": [
+    "Feeder topology and declared hardware capabilities.",
+    "Any value written as { \"value\": ..., \"placeholder\": true } is an UNVALIDATED placeholder.",
+    "The dashboard lists every placeholder on the Trends & diagnostics page.",
+    "Nodes form a radial tree: each node names its upstream node (or SOURCE) and the section between them."
+  ],
+  "feeder_id": "FDR-01",
+  "name": "Prototype LV radial feeder (single phase)",
+
+  "nominal_voltage_v": {
+    "value": 230,
+    "unit": "V",
+    "placeholder": true,
+    "note": "Set to the actual RMS voltage of the isolated test supply. All voltage thresholds are per-unit of this value."
+  },
+  "sensor_full_scale_v": {
+    "value": 300,
+    "unit": "V",
+    "placeholder": true,
+    "note": "Highest credible reading after calibration. Readings above this are rejected as OUT_OF_RANGE."
+  },
+
+  "controllers": [
+    {
+      "controller_id": "CTRL-01",
+      "label": "Central controller (ESP32)",
+      "nodes": ["N-A", "N-B", "N-C"]
+    }
+  ],
+
+  "nodes": [
+    { "node_id": "N-A", "label": "Node A", "upstream": "SOURCE", "section_id": "S-0A", "section_label": "Source – Node A", "has_current_sensor": false },
+    { "node_id": "N-B", "label": "Node B", "upstream": "N-A", "section_id": "S-AB", "section_label": "Node A – Node B", "has_current_sensor": false },
+    { "node_id": "N-C", "label": "Node C", "upstream": "N-B", "section_id": "S-BC", "section_label": "Node B – Node C", "has_current_sensor": false }
+  ],
+
+  "source_reference_node": null,
+
+  "isolation_points": [
+    {
+      "switch_id": "SW-1",
+      "label": "Source-side isolation relay",
+      "located_in_section": "S-0A",
+      "de_energises_nodes": ["N-A", "N-B", "N-C"]
+    }
+  ],
+
+  "capabilities": {
+    "transient_detection": {
+      "value": "PER_RMS_WINDOW",
+      "placeholder": true,
+      "note": "Assumption A7: firmware reports per-cycle voltage_rms_min. Use REPORT_INTERVAL if it does not, or NONE."
+    },
+    "current_measurement": false
+  }
+}

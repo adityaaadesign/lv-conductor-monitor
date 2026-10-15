@@ -1,0 +1,28 @@
+{
+  "id": "S06",
+  "title": "Sensor fault at Node B",
+  "category": "Data quality",
+  "description": "Node B's voltage sensor saturates (reports an impossible value with sensor_status SATURATED and data_valid false) for 20 s, then recovers.",
+  "what_to_look_for": [
+    "Node B turns grey 'Invalid data'. Its last VALID voltage is shown with its age; the saturated value is NOT shown as a reading.",
+    "Feeder: DEGRADED (not an interruption).",
+    "One SENSOR_FAULT event, closed when the sensor recovers."
+  ],
+  "duration_ms": 40000,
+  "seed": 6,
+  "controller": {},
+  "steps": [
+    { "at_ms": 10000, "action": "sensor_fault", "node": "N-B", "mode": "SATURATED", "note": "Node B sensor saturates" },
+    { "at_ms": 30000, "action": "clear_sensor_fault", "node": "N-B", "note": "Node B sensor recovers" }
+  ],
+  "expect": {
+    "states": ["INITIALIZING", "NORMAL", "DEGRADED", "NORMAL"],
+    "events": { "SENSOR_FAULT": 1 },
+    "never_states": ["INTERRUPTION_SUSPECTED", "ISOLATION_PENDING"],
+    "event_checks": [
+      { "event_type": "SENSOR_FAULT", "field": "node_ids", "equals": ["N-B"] },
+      { "event_type": "SENSOR_FAULT", "field": "status", "equals": "CLOSED" }
+    ],
+    "final_status": { "status": "NORMAL" }
+  }
+}

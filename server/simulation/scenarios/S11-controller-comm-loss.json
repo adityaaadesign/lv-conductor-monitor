@@ -1,0 +1,28 @@
+{
+  "id": "S11",
+  "title": "Controller communication loss",
+  "category": "Data quality",
+  "description": "The controller's Wi-Fi link drops for 20 s. The (simulated) controller keeps running its local protection; the server simply receives nothing.",
+  "what_to_look_for": [
+    "Nodes go Stale after 3 s; with no valid data from any node the feeder is UNKNOWN. After 10 s the controller is declared offline.",
+    "The explanation states that this is NOT evidence of an interruption and that local protection is unaffected.",
+    "One CONTROLLER_COMM_LOST event; no NODE_OFFLINE or interruption events.",
+    "When reports resume, the feeder re-initialises and returns to NORMAL."
+  ],
+  "duration_ms": 40000,
+  "seed": 11,
+  "controller": {},
+  "steps": [
+    { "at_ms": 10000, "action": "controller_link", "up": false, "note": "Controller Wi-Fi link drops (no buffering)" },
+    { "at_ms": 30000, "action": "controller_link", "up": true, "note": "Link restored" }
+  ],
+  "expect": {
+    "states": ["INITIALIZING", "NORMAL", "UNKNOWN", "INITIALIZING", "NORMAL"],
+    "events": { "CONTROLLER_COMM_LOST": 1 },
+    "never_states": ["INTERRUPTION_SUSPECTED"],
+    "event_checks": [
+      { "event_type": "CONTROLLER_COMM_LOST", "field": "status", "equals": "CLOSED" }
+    ],
+    "final_status": { "status": "NORMAL" }
+  }
+}

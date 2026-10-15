@@ -1,0 +1,29 @@
+{
+  "id": "S05",
+  "title": "Upstream (source-wide) supply loss, then return",
+  "category": "Interruption",
+  "description": "The simulated source fails: every node loses supply at once. This is not a break pattern (no node has supply upstream of a dead one), so the virtual controller does not trip. Supply returns after 20 s.",
+  "what_to_look_for": [
+    "Feeder: INTERRUPTION SUSPECTED with location 'Source or first section – cannot distinguish'. No section is claimed.",
+    "Event type SOURCE_INTERRUPTION_SUSPECTED; isolation not requested.",
+    "When supply returns: RECOVERY CHECK (10 s), RESTORED, then NORMAL; the event closes."
+  ],
+  "duration_ms": 50000,
+  "seed": 5,
+  "controller": {},
+  "steps": [
+    { "at_ms": 10000, "action": "set_source", "pu": 0, "note": "Source supply lost (all nodes)" },
+    { "at_ms": 30000, "action": "set_source", "pu": 1.0, "note": "Source supply returns" }
+  ],
+  "expect": {
+    "states": ["INITIALIZING", "NORMAL", "INTERRUPTION_SUSPECTED", "RECOVERY_CHECK", "RESTORED", "NORMAL"],
+    "events": { "SOURCE_INTERRUPTION_SUSPECTED": 1 },
+    "event_checks": [
+      { "event_type": "SOURCE_INTERRUPTION_SUSPECTED", "field": "localization_status", "equals": "SOURCE_OR_UPSTREAM" },
+      { "event_type": "SOURCE_INTERRUPTION_SUSPECTED", "field": "affected_section", "equals": null },
+      { "event_type": "SOURCE_INTERRUPTION_SUSPECTED", "field": "isolation_requested", "equals": false },
+      { "event_type": "SOURCE_INTERRUPTION_SUSPECTED", "field": "status", "equals": "CLOSED" }
+    ],
+    "final_status": { "status": "NORMAL" }
+  }
+}

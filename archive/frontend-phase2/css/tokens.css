@@ -1,0 +1,75 @@
+/* Design tokens. Status colours: green = normal, amber = warning, red = abnormal,
+   grey = unknown / no valid data. Every status also carries a text label and icon. */
+:root {
+  --bg: #eef1f4;
+  --surface: #ffffff;
+  --surface-2: #f5f7f9;
+  --border: #d6dce2;
+  --border-strong: #b9c2cb;
+  --text: #19222d;
+  --text-2: #445263;
+  --text-3: #66727f;
+  --header-bg: #15202b;
+  --header-text: #e9eef3;
+  --header-sub: #9fb0c0;
+  --accent: #1d5ea8;
+  --accent-bg: #e4eefa;
+
+  --green: #1b7a4b;
+  --green-bg: #e2f3e9;
+  --amber: #8f5a00;
+  --amber-bg: #fcefd2;
+  --red: #b3261e;
+  --red-bg: #fde6e3;
+  --grey: #5b6673;
+  --grey-bg: #eaedf0;
+
+  --line-energised: #1b7a4b;
+  --line-suspected: #d0352b;
+  --line-candidate: #c98a0b;
+  --line-nosupply: #9aa5b1;
+  --line-unknown: #9aa5b1;
+
+  --sim: #8a4b00;
+  --sim-bg: #ffe9c2;
+  --sim-stripe: #f5c04a;
+
+  --radius: 8px;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 3px rgba(16, 24, 40, 0.08);
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "Cascadia Mono", Consolas, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e141a;
+    --surface: #161f28;
+    --surface-2: #1b2631;
+    --border: #2a3846;
+    --border-strong: #3a4b5c;
+    --text: #e3e9ef;
+    --text-2: #aab7c4;
+    --text-3: #8592a0;
+    --header-bg: #0a0f14;
+    --accent: #6ea8ec;
+    --accent-bg: #172a40;
+    --green: #4fc48d;
+    --green-bg: #11301f;
+    --amber: #f2b648;
+    --amber-bg: #33270d;
+    --red: #ff7d70;
+    --red-bg: #3b1613;
+    --grey: #9ba7b3;
+    --grey-bg: #222c36;
+    --line-energised: #4fc48d;
+    --line-suspected: #ff6b5e;
+    --line-candidate: #f2b648;
+    --line-nosupply: #5d6b79;
+    --line-unknown: #5d6b79;
+    --sim: #ffcf7a;
+    --sim-bg: #3a2a0c;
+    --sim-stripe: #6b4b10;
+    color-scheme: dark;
+  }
+}

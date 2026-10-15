@@ -1,0 +1,81 @@
+{
+  "id": "S17",
+  "title": "Line interruption, switch feedback missing",
+  "category": "Test button",
+  "description": "Same break as S16, but the switch's feedback wire is disconnected, so no feedback signal ever arrives. The controller orders the shutdown, but nothing confirms it.",
+  "what_to_look_for": [
+    "Status ISOLATION PENDING – it never changes to ISOLATED.",
+    "Shutdown commanded: Yes. Switch feedback confirms: No.",
+    "A 'Shutdown not confirmed' alert after about 3 s."
+  ],
+  "duration_ms": 20000,
+  "seed": 17,
+  "controller": {
+    "feedback": "DISCONNECTED"
+  },
+  "steps": [
+    {
+      "at_ms": 3000,
+      "action": "break_section",
+      "section": "S-AB",
+      "note": "Simulated conductor parts between Node A and Node B (switch feedback wire disconnected)"
+    }
+  ],
+  "button": {
+    "order": 4,
+    "label": "Isolation Not Confirmed",
+    "does": "Same simulated broken wire, but the simulated switch sends no feedback signal. The shutdown is commanded but never confirmed.",
+    "wait": "ISOLATION PENDING appears after about 4 s; the 'not confirmed' alert about 3 s later.",
+    "checks": [
+      {
+        "text": "Status: ISOLATION PENDING (never ISOLATED).",
+        "path": "display_status",
+        "equals": "ISOLATION_PENDING"
+      },
+      {
+        "text": "Fault location: Possible interruption between Node A and Node B (estimate).",
+        "path": "affected_section",
+        "equals": "S-AB"
+      },
+      {
+        "text": "Isolation command: Command issued.",
+        "path": "isolation_command_state",
+        "equals": "COMMANDED"
+      },
+      {
+        "text": "Switch feedback: Not confirmed (no confirmation within 3 s).",
+        "path": "isolation_feedback_state",
+        "equals": "TIMEOUT"
+      },
+      {
+        "text": "A 'Shutdown not confirmed by switch' event appears.",
+        "active_event": "ISOLATION_UNCONFIRMED"
+      }
+    ]
+  },
+  "expect": {
+    "states": [
+      "INITIALIZING",
+      "NORMAL",
+      "ISOLATION_PENDING"
+    ],
+    "events": {
+      "INTERRUPTION_SUSPECTED": 1,
+      "ISOLATION_UNCONFIRMED": 1
+    },
+    "never_states": [
+      "ISOLATED"
+    ],
+    "event_checks": [
+      {
+        "event_type": "INTERRUPTION_SUSPECTED",
+        "field": "isolation_confirmed",
+        "equals": "NOT_CONFIRMED"
+      }
+    ],
+    "final_status": {
+      "display_status": "ISOLATION_PENDING",
+      "isolation_feedback_state": "TIMEOUT"
+    }
+  }
+}
