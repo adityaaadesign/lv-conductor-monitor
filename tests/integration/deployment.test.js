@@ -119,7 +119,17 @@ test('Vercel build: dashboard files plus config.js pointing at the backend', asy
     const dist = path.join(root, 'dist');
     assert.match(readFileSync(path.join(dist, 'config.js'), 'utf8'), /window\.LV_API_BASE = "https:\/\/lv-monitor-api\.example\.workers\.dev";/);
     for (const f of ['index.html', 'js/app.js', 'css/app.css', 'shared/simple.js']) assert.ok(existsSync(path.join(dist, f)), f);
-    assert.ok(!existsSync(path.join(dist, 'server')), 'server code must not be published on Vercel');
+    // Only the modules the in-browser DEMO needs are published – no API, startup or key-loading code.
+    const { readdirSync } = await import('node:fs');
+    const { BROWSER_MODULES } = await import('../../server/demo-assets.js');
+    const published = readdirSync(path.join(dist, 'server'), { recursive: true, withFileTypes: true })
+      .filter((d) => d.isFile()).map((d) => path.relative(dist, path.join(d.parentPath, d.name)).replaceAll('\\', '/')).sort();
+    assert.deepEqual(published, [...BROWSER_MODULES].sort());
+    for (const f of ['server/api/routes.js', 'server/index.js', 'server/app.js', 'server/config/load-config.js', 'config/devices.example.json', 'config/devices.local.json']) {
+      assert.ok(!existsSync(path.join(dist, f)), `${f} must not be published on Vercel`);
+    }
+    assert.deepEqual(readdirSync(path.join(dist, 'demo')).sort(), ['detection.json', 'feeder.json', 'scenarios.json', 'server.json']);
+    for (const f of readdirSync(path.join(dist, 'demo'))) assert.doesNotMatch(readFileSync(path.join(dist, 'demo', f), 'utf8'), /DEVICE_KEY|change-me/i);
   } finally {
     rmSync(path.join(root, 'dist'), { recursive: true, force: true });
   }
@@ -135,4 +145,16 @@ test('every dashboard script has valid JavaScript syntax', async () => {
     ...readdirSync(path.join(root, 'shared')).filter((f) => f.endsWith('.js')).map((f) => `shared/${f}`),
   ];
   for (const f of files) assert.doesNotThrow(() => execFileSync(process.execPath, ['--check', f], { cwd: root, stdio: 'pipe' }), f);
+});
+
+test('the laptop server offers the in-browser DEMO files but never the device keys', async () => {
+  const base = await start('live', { 'CTRL-01': KEY });
+  assert.equal((await fetch(`${base}/server/processing/pipeline.js`)).status, 200);
+  assert.match((await fetch(`${base}/server/processing/pipeline.js`)).headers.get('content-type'), /javascript/);
+  assert.equal((await fetch(`${base}/demo/feeder.json`)).status, 200);
+  assert.equal((await (await fetch(`${base}/demo/scenarios.json`)).json()).length, 18);
+  for (const p of ['/server/api/routes.js', '/server/index.js', '/server/config/load-config.js', '/demo/devices.local.json', '/config/devices.local.json']) {
+    const r = await fetch(`${base}${p}`);
+    assert.notEqual(r.status, 200, `${p} must not be served`);
+  }
 });

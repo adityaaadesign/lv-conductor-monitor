@@ -7,7 +7,7 @@
 import { loadConfig } from '../server/config/load-config.js';
 import { openDatabase } from '../server/storage/db.js';
 import { Repository } from '../server/storage/repository.js';
-import { loadScenarios } from '../server/simulation/simulator.js';
+import { loadScenarios } from '../server/simulation/scenario-files.js';
 import { runScenario, checkExpectations } from '../server/simulation/headless.js';
 
 const wanted = process.argv[2]?.toUpperCase();

@@ -15,11 +15,12 @@ import {
   summarySentence, readingStatus, supplyText, locationView, shutdownView,
 } from '/shared/simple.js';
 import { REASON_TEXT } from '/shared/labels.js';
-import { getJson, postJson, csvUrl } from './api.js';
+import { getJson, postJson, csvUrl, useLocalBackend, LOCAL_CSV_HREF } from './api.js';
 import { createStore, connectLive } from './store.js';
 import { esc, fmtTime, fmtDateTime, fmtDuration, fmtV } from './format.js';
 import { feederDiagram, diagramLegend } from './diagram.js';
 import { gaugeSettings, gaugeSvg, gaugeLegend } from './gauge.js';
+import { loadDemoEngine } from './demo-engine.js';
 
 const store = createStore();
 const main = document.getElementById('main');
@@ -377,8 +378,46 @@ function renderConnection(state) {
   strip.textContent = `Connection to the monitoring server lost – retrying. Values shown are from ${store.lastStatusAt ? fmtTime(store.lastStatusAt) : 'earlier'} and may be out of date.`;
 }
 
+// ---- DEMO / LIVE switch ---------------------------------------------------------------
+// DEMO = simulation running inside this browser tab (nothing is sent anywhere).
+// LIVE = the monitoring server (Cloudflare Worker online, or `npm start` on the laptop).
+// The choice is kept in the address (?mode=demo / ?mode=live) and remembered in this browser.
+// Switching reloads the page, so the two modes never share any data on screen.
+function wantedMode() {
+  const fromUrl = new URLSearchParams(location.search).get('mode');
+  if (fromUrl === 'demo' || fromUrl === 'live') {
+    try { localStorage.setItem('lv-mode', fromUrl); } catch { /* storage blocked */ }
+    return fromUrl;
+  }
+  try { return localStorage.getItem('lv-mode') === 'demo' ? 'demo' : 'live'; } catch { return 'live'; }
+}
+
+function renderModeSwitch(active, liveNote = '') {
+  const el = document.getElementById('mode-switch');
+  const opt = (mode, title, sub, disabledNote) => `<button type="button" role="radio" class="ms-opt ${mode}${active === mode ? ' on' : ''}"
+      data-mode="${mode}" aria-checked="${active === mode}" ${disabledNote ? `disabled title="${esc(disabledNote)}"` : ''}>
+      <span class="ms-title">${title}</span><span class="ms-sub">${sub}</span></button>`;
+  el.innerHTML = opt('demo', 'DEMO', 'Simulated') + opt('live', 'LIVE', 'Real device', liveNote);
+  el.hidden = false;
+  el.onclick = (e) => {
+    const b = e.target.closest('button[data-mode]');
+    if (!b || b.disabled || b.dataset.mode === active) return;
+    const url = new URL(location.href);
+    url.searchParams.set('mode', b.dataset.mode);
+    location.assign(url);
+  };
+}
+
+let demoEngine = null;
+
 async function boot() {
+  const want = wantedMode();
+  renderModeSwitch(want);
   try {
+    if (want === 'demo') {
+      demoEngine = await loadDemoEngine();
+      useLocalBackend(demoEngine);
+    }
     const [config, topology, status] = await Promise.all([getJson('/config'), getJson('/topology'), getJson('/status')]);
     store.config = config;
     store.topology = topology;
@@ -387,18 +426,34 @@ async function boot() {
       buttons = (await getJson('/sim/scenarios')).scenarios.filter((x) => x.button).sort((a, b) => a.button.order - b.button.order);
     }
   } catch (err) {
-    const fix = window.LV_API_BASE
-      ? `Check that the backend at ${esc(window.LV_API_BASE)} is deployed and that ALLOWED_ORIGINS includes this page's address.`
-      : 'Start it with <b>npm run sim</b> and reload the page.';
+    const fix = want === 'demo'
+      ? 'The demo files could not be loaded – reload the page.'
+      : window.LV_API_BASE
+        ? `Check that the backend at ${esc(window.LV_API_BASE)} is deployed and that ALLOWED_ORIGINS includes this page's address. You can still use <b>DEMO</b> (switch at the top).`
+        : 'Start it with <b>npm start</b> (LIVE) or <b>npm run sim</b>, and reload the page – or use <b>DEMO</b> (switch at the top).';
     main.innerHTML = `<div class="error">Cannot reach the monitoring server (${esc(err.message)}). ${fix}</div>`;
     renderConnection('reconnecting');
     return;
   }
-  const badge = document.getElementById('mode-badge');
-  badge.textContent = isDemo() ? 'DEMO' : 'LIVE';
-  badge.className = `mode-badge ${isDemo() ? 'demo' : 'live'}`;
-  badge.hidden = false;
+  // A laptop server started with `npm run sim` is itself a DEMO server: no LIVE there.
+  renderModeSwitch(isDemo() ? 'demo' : 'live',
+    isDemo() && !demoEngine ? 'This server runs in DEMO mode (npm run sim). Start it with npm start for LIVE.' : '');
   document.getElementById('demo-strip').hidden = !isDemo();
+  document.getElementById('demo-where').textContent = demoEngine
+    ? 'Runs only in this browser tab – nothing is sent to the server; the history is cleared when you reload.'
+    : '';
+  if (demoEngine) {
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest(`a[href="${LOCAL_CSV_HREF}"]`)) return;
+      e.preventDefault();
+      const url = URL.createObjectURL(new Blob([demoEngine.csv()], { type: 'text/csv' }));
+      const a = Object.assign(document.createElement('a'), { href: url, download: 'events-SIMULATED-demo.csv' });
+      document.body.append(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+  }
   store.on('status', scheduleRender);
   store.on('connection', renderConnection);
   let t = null;
@@ -407,7 +462,7 @@ async function boot() {
   buildLayout();
   render();
   loadEvents();
-  connectLive(store);
+  connectLive(store, demoEngine);
 }
 
 boot();

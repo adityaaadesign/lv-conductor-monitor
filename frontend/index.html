@@ -19,14 +19,14 @@
         <div class="sub">Low-voltage conductor breakage detection</div>
       </div>
     </div>
+    <div id="mode-switch" class="mode-switch" role="radiogroup" aria-label="Choose DEMO or LIVE data" hidden></div>
     <div class="top-right">
-      <span id="mode-badge" class="mode-badge" hidden></span>
       <span id="connection" class="connection" role="status"><span class="dot"></span>Connecting…</span>
     </div>
   </header>
 
   <!-- Safety notices: always visible, never inside a dropdown -->
-  <div id="demo-strip" class="strip demo" hidden><b>DEMO MODE</b> All readings and switch signals are simulated · no real switch can be operated</div>
+  <div id="demo-strip" class="strip demo" hidden><b>DEMO MODE</b> All readings and switch signals are simulated · no real switch can be operated<span id="demo-where"></span></div>
   <div id="live-strip" class="strip live" hidden><b>LIVE MODE</b> <span id="live-strip-text">Hardware integration not yet tested</span></div>
   <div id="storage-strip" class="strip warn" role="alert" hidden></div>
   <div id="conn-strip" class="strip warn" role="alert" hidden></div>

@@ -199,7 +199,9 @@ Free hosting (₹0 on the free plans):
 - **Cloudflare Worker + D1** runs the LIVE backend and database (`cloudflare/`). It uses the same detection
   code as the laptop server, receives the ESP32 reports over HTTPS, and keeps readings and events in D1.
 - **Vercel** hosts the dashboard page (`vercel.json`); it asks the Worker for new data every 5 s.
-- **DEMO** stays on the laptop: `npm run sim`. Demo data never goes to Cloudflare.
+- **DEMO/LIVE switch** at the top of the page: **LIVE** shows the real device data from the Worker; **DEMO** runs
+  the simulator and the five test buttons *inside the browser tab* (`frontend/js/demo-engine.js`) – nothing is sent
+  to Cloudflare, so demo data never mixes with real data. `npm run sim` on the laptop still works as before.
 
 Steps, accounts, free-plan limits, settings (`DEVICE_KEYS`, `ALLOWED_ORIGINS`, `API_BASE_URL`) and the tests:
 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md). **The online deployment has not been tested on Cloudflare or Vercel yet**

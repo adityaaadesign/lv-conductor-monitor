@@ -16,7 +16,8 @@
  VERCEL: dashboard page (plain files) ── asks every 5 s for the ──────────┘   │ once a minute: cron check
                                           status (allowed by CORS)             (silent nodes are recorded
                                                                                even with no visitor)
- DEMO mode: on the laptop only – npm run sim. It never sends data to Cloudflare.
+ DEMO mode: the DEMO/LIVE switch at the top of the page. DEMO runs the simulator inside the browser tab
+ (also on Vercel) and never sends data to Cloudflare. `npm run sim` on the laptop still works.
 ```
 
 - **Cloudflare Worker** = the backend. It runs the *same* detection code as the laptop server
@@ -27,7 +28,10 @@
 - **Protection stays on the ESP32.** The website only shows what the controller reports. It cannot
   operate a switch, has no remote reset and never recloses anything.
 - **DEMO data never reaches Cloudflare**: the Worker has no simulator and no demo controls; it only accepts
-  device reports that carry the right key. DEMO runs on the laptop with its own database (`data/sim.db`).
+  device reports that carry the right key. DEMO (switch at the top of the page) runs in the browser tab and
+  makes no request to the Worker; on the laptop, `npm run sim` keeps its own database (`data/sim.db`).
+- The Vercel site therefore also publishes the simulator and detection code that the browser DEMO needs
+  (listed in `server/demo-assets.js`) – no API code, keys or settings.
 
 ## 2. Accounts and cost
 

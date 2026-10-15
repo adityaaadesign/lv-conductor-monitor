@@ -38,8 +38,9 @@ export function createStore() {
 // The Cloudflare Worker cannot push, so /config says "poll": the page then asks for the
 // status every interval_ms – and stops while the browser tab is hidden, to stay well
 // inside the free request limit.
-export function connectLive(store) {
+export function connectLive(store, demoEngine = null) {
   const lu = store.config?.live_updates;
+  if (lu?.method === 'local' && demoEngine) return demoEngine.connect(store);
   if (lu?.method === 'poll') return pollStatus(store, Math.max(2000, Number(lu.interval_ms) || 5000));
   const es = new EventSource(apiUrl('/stream'));
   es.onopen = () => store.setConnection('live');

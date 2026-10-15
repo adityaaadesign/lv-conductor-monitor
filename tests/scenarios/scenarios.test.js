@@ -3,7 +3,7 @@
 // final status. Running each twice also proves the results are repeatable.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { loadScenarios } from '../../server/simulation/simulator.js';
+import { loadScenarios } from '../../server/simulation/scenario-files.js';
 import { runScenario, checkExpectations } from '../../server/simulation/headless.js';
 import { testConfig, memoryRepo, quietLogger } from '../helpers.js';
 import { checkPasses } from '../../shared/simple.js';

@@ -6,7 +6,9 @@ import path from 'node:path';
 import { openDatabase } from './storage/db.js';
 import { Repository } from './storage/repository.js';
 import { Pipeline } from './processing/pipeline.js';
-import { Simulator, loadScenarios } from './simulation/simulator.js';
+import { Simulator, scenarioSummaries } from './simulation/simulator.js';
+import { loadScenarios } from './simulation/scenario-files.js';
+import { BROWSER_MODULES, demoDataFiles } from './demo-assets.js';
 import { buildApiRouter } from './api/routes.js';
 import { SseHub } from './api/sse.js';
 import { RealClock, ScaledClock, toIso } from './domain/clock.js';
@@ -39,12 +41,7 @@ export function createServer({ config, mode, dataDir, logger = console, autoStar
   if (mode === 'sim') {
     scenarios = loadScenarios();
     simControl = {
-      scenarios: () => scenarios.map((s) => ({
-        id: s.id, title: s.title, category: s.category, description: s.description,
-        what_to_look_for: s.what_to_look_for, duration_ms: s.duration_ms, steps: s.steps,
-        controller: s.controller, expected_states: s.expect?.states ?? [], expected_events: s.expect?.events ?? {},
-        button: s.button ?? null,
-      })),
+      scenarios: () => scenarioSummaries(scenarios),
       state: () => (simulator
         ? { ...simulator.state(), speed: clock.speed, sim_time_iso: toIso(simulator.cursor) }
         : { running: false, speed: clock.speed }),
@@ -111,6 +108,12 @@ export function createServer({ config, mode, dataDir, logger = console, autoStar
   app.get('/api/v1/stream', sse.handler());
   app.use('/api/v1', buildApiRouter({ config, repo, getPipeline: () => pipeline, mode, clock, simControl, logger, deviceKeys: mode === 'live' ? deviceKeys : {} }));
   app.use('/shared', express.static(path.join(root, 'shared')));
+  // In-browser DEMO (DEMO/LIVE switch): the listed modules and the non-secret config only.
+  for (const rel of BROWSER_MODULES) app.get(`/${rel}`, (req, res) => res.type('text/javascript').sendFile(path.join(root, rel)));
+  const demoData = demoDataFiles(root);
+  app.get('/demo/:name', (req, res) => (Object.hasOwn(demoData, req.params.name)
+    ? res.json(demoData[req.params.name])
+    : res.status(404).json({ error: 'NOT_FOUND' })));
   app.use(express.static(path.join(root, 'frontend')));
 
   let loop = null;

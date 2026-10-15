@@ -7,31 +7,34 @@
 // from the same loop, so a scenario produces identical results in real time (demo) and
 // instantly (tests).
 
-import { readFileSync, readdirSync } from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+// No file access here, so the same simulator also runs in the browser (in-browser DEMO).
+// Reading the scenario files from disk: scenario-files.js.
+
 import { FeederPhysics } from './feeder-physics.js';
 import { VirtualController } from './virtual-controller.js';
-
-export const SCENARIO_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), 'scenarios');
 
 const ACTIONS = new Set([
   'set_source', 'break_section', 'repair_section', 'set_node_drop', 'sensor_fault', 'clear_sensor_fault',
   'node_link', 'controller_link', 'local_reset', 'note',
 ]);
 
-export function loadScenarios(dir = SCENARIO_DIR) {
-  return readdirSync(dir)
-    .filter((f) => f.endsWith('.json'))
-    .sort()
-    .map((f) => {
-      const s = JSON.parse(readFileSync(path.join(dir, f), 'utf8'));
-      for (const step of s.steps ?? []) {
-        if (!ACTIONS.has(step.action)) throw new Error(`${f}: unknown action "${step.action}"`);
-      }
-      s.steps = [...(s.steps ?? [])].sort((a, b) => a.at_ms - b.at_ms);
-      return s;
-    });
+// Check a parsed scenario and put its steps in time order. name: used in error messages.
+export function prepareScenario(s, name = s.id) {
+  for (const step of s.steps ?? []) {
+    if (!ACTIONS.has(step.action)) throw new Error(`${name}: unknown action "${step.action}"`);
+  }
+  s.steps = [...(s.steps ?? [])].sort((a, b) => a.at_ms - b.at_ms);
+  return s;
+}
+
+// The scenario list as the dashboard shows it (GET /api/v1/sim/scenarios).
+export function scenarioSummaries(scenarios) {
+  return scenarios.map((s) => ({
+    id: s.id, title: s.title, category: s.category, description: s.description,
+    what_to_look_for: s.what_to_look_for, duration_ms: s.duration_ms, steps: s.steps,
+    controller: s.controller, expected_states: s.expect?.states ?? [], expected_events: s.expect?.events ?? {},
+    button: s.button ?? null,
+  }));
 }
 
 export class Simulator {

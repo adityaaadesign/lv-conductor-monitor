@@ -36,6 +36,29 @@ button { font: inherit; }
 .logo { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-bg); color: var(--accent); font-size: 19px; }
 .sub { font-size: 12px; color: var(--text-3); }
 .top-right { display: flex; align-items: center; gap: 12px; }
+
+/* DEMO / LIVE switch – large and always visible in the header */
+.mode-switch { display: inline-flex; padding: 5px; gap: 5px; border-radius: 999px; background: var(--surface-2);
+  border: 2px solid var(--border-strong); box-shadow: var(--shadow); }
+.mode-switch[hidden] { display: none !important; }
+.ms-opt { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-width: 120px;
+  padding: 7px 22px; border: 0; border-radius: 999px; background: transparent; color: var(--text-3); cursor: pointer;
+  font: inherit; line-height: 1.1; transition: background .15s, color .15s, transform .1s; }
+.ms-opt .ms-title { font-size: 17px; font-weight: 900; letter-spacing: .14em; }
+.ms-opt .ms-sub { font-size: 11px; font-weight: 600; margin-top: 2px; opacity: .85; }
+.ms-opt:hover:not(.on):not(:disabled) { background: var(--grey-bg); color: var(--text); }
+.ms-opt:active:not(:disabled) { transform: scale(.97); }
+.ms-opt:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.ms-opt:disabled { opacity: .45; cursor: not-allowed; }
+/* DEMO: solid amber for readable text, with a hazard-striped band along the bottom edge */
+.ms-opt.demo.on { color: #241500; cursor: default; box-shadow: inset 0 0 0 2px var(--sim); padding-bottom: 11px;
+  background: repeating-linear-gradient(135deg, transparent 0 8px, rgba(36, 21, 0, .85) 8px 12px) bottom / 100% 6px no-repeat,
+    var(--sim-stripe); }
+.ms-opt.live.on { color: #fff; cursor: default; background: var(--green); box-shadow: 0 0 0 3px color-mix(in srgb, var(--green) 30%, transparent); }
+.ms-opt.live.on .ms-title::before { content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 8px;
+  border-radius: 50%; background: #fff; vertical-align: 2px; animation: live-pulse 1.6s ease-in-out infinite; }
+@keyframes live-pulse { 50% { opacity: .25; } }
+@media (prefers-reduced-motion: reduce) { .ms-opt.live.on .ms-title::before { animation: none; } }
 .mode-badge { font-size: 11px; font-weight: 800; letter-spacing: 0.08em; padding: 3px 9px; border-radius: 5px; }
 .mode-badge.demo { background: var(--sim-bg); color: var(--sim); border: 1px solid var(--sim); }
 .mode-badge.live { background: var(--accent); color: #fff; }
@@ -169,6 +192,8 @@ details > summary:focus-visible { outline: 2px solid var(--accent); outline-offs
 @media (max-width: 560px) {
   .main { padding: 14px 16px 26px; gap: 14px; }
   .top, .strip { padding-left: 16px; padding-right: 16px; }
+  .mode-switch { order: 3; width: 100%; }
+  .ms-opt { flex: 1; min-width: 0; padding: 8px 10px; }
   .card { padding: 15px 16px; border-radius: 14px; }
   .status .word { font-size: 27px; }
   .nodes { grid-template-columns: 1fr; gap: 8px; }

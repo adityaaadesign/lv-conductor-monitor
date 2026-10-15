@@ -7,7 +7,8 @@ import path from 'node:path';
 import { openDatabase } from '../../server/storage/db.js';
 import { Repository } from '../../server/storage/repository.js';
 import { Pipeline } from '../../server/processing/pipeline.js';
-import { loadScenarios, Simulator } from '../../server/simulation/simulator.js';
+import { Simulator } from '../../server/simulation/simulator.js';
+import { loadScenarios } from '../../server/simulation/scenario-files.js';
 import { testConfig, makeReport, protection, quietLogger, T0 } from '../helpers.js';
 
 const config = testConfig();
